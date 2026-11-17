@@ -25,7 +25,7 @@ final class Indikator
             'label' => 'Sumber Daya Khusus',
             'pertanyaan' => 'Apakah unit ini memiliki alokasi sumber daya manusia atau anggaran khusus untuk pengelolaan teknologi informasi?',
             'ringkas' => 'Ada SDM atau anggaran khusus untuk TI?',
-            'petunjuk' => 'Jawab <b>Ya</b> bila ada pegawai yang ditugaskan khusus mengurus TI, misalnya pranata komputer atau admin sistem, atau ada anggaran khusus TI seperti belanja aplikasi, hosting, atau jaringan.',
+            'petunjuk' => 'Jawab <b>Ya</b> bila ada pegawai yang ditugaskan khusus mengurus TI, misalnya pranata komputer atau admin sistem, atau ada anggaran khusus TI seperti belanja aplikasi, hosting, atau jaringan. Jawab Tidak bila urusan TI hanya dikerjakan sambilan tanpa anggaran khusus.',
         ],
     ];
 

@@ -28,11 +28,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Pemetaan Unit Digital')
             ->colors([
-                'primary' => Color::hex('#1d7348'),
+                'primary' => Color::hex(config('tema.warna.sampul-3')),
                 'gray' => Color::Stone,
-                'danger' => Color::hex('#a3402a'),
-                'warning' => Color::hex('#b7791f'),
-                'success' => Color::hex('#1d7348'),
+                'danger' => Color::hex(config('tema.warna.galat')),
+                'warning' => Color::hex(config('tema.warna.peringatan')),
+                'success' => Color::hex(config('tema.warna.ya')),
             ])
             ->font('Atkinson Hyperlegible', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->darkMode(false)

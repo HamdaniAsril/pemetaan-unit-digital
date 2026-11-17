@@ -5,10 +5,7 @@
 <div class="shell">
   <nav class="rel" aria-label="Daftar bagian form">
     <div class="rel-kepala">
-      <div>
-        <div class="rel-aplikasi">Pemetaan Unit Digital</div>
-        <div class="rel-opd">{{ $namaOpd }}</div>
-      </div>
+      <div class="rel-opd">{{ $namaOpd }}</div>
       <button type="button" class="rel-menu" id="tombolMenu" aria-expanded="false" aria-controls="relKaki" aria-label="Menu akun">
         <svg class="ikon"><use href="#i-menu"/></svg>
       </button>
@@ -18,6 +15,7 @@
           <i style="width: {{ $progres['total'] ? round($progres['terjawab'] / $progres['total'] * 100) : 0 }}%"></i>
         </div>
       </div>
+      <div class="rel-simpan" id="statusRel" aria-hidden="true"></div>
     </div>
     <ul class="rel-daftar" id="daftarTab"></ul>
     <div class="rel-kaki" id="relKaki">
@@ -33,7 +31,7 @@
 
       @if ($terkirim)
         <div class="terkirim-pita">
-          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}" aria-hidden="true">Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></div>
+          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}" role="img" aria-label="Stempel terkirim">Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></div>
           <p><b>Jawaban sudah dikirim pada {{ $opd->submitted_at?->locale('id')->translatedFormat('j F Y, H:i') }}.</b> Terima kasih. Jawaban terkunci; hubungi admin bila ada yang perlu diubah.</p>
         </div>
       @endif
@@ -43,7 +41,7 @@
           <h1 id="judul" tabindex="-1"></h1>
           <p id="subjudul"></p>
           @if ($kontak)
-            <p class="kontak" style="margin-top:6px">Unit tidak sesuai? Hubungi admin: {{ $kontak }}</p>
+            <p class="kontak">Unit tidak sesuai? Hubungi admin: {{ $kontak }}</p>
           @endif
         </div>
         <div class="simpan ok" id="statusSimpan" role="status" aria-live="polite">
@@ -145,13 +143,10 @@ function kartu(u) {
     </div>
     ${Q.map(q => {
       const n = `j-${u.id}-${q.id}`, v = u.jawaban[q.id];
-      return `<fieldset class="sel" style="border:0;margin:0;padding:0;min-width:0">
-        <legend class="sel-label">${esc(q.label)}</legend>
-        <span class="sr-only">${esc(q.label)} untuk ${esc(u.nama)}</span>
-        <div class="pilih">
-          <label class="ya"><input type="radio" name="${n}" value="ya" data-unit="${u.id}" data-q="${q.id}" ${v === "ya" ? "checked" : ""} ${TERKIRIM ? "disabled" : ""}>${ikon("cek")}Ya</label>
-          <label class="tidak"><input type="radio" name="${n}" value="tidak" data-unit="${u.id}" data-q="${q.id}" ${v === "tidak" ? "checked" : ""} ${TERKIRIM ? "disabled" : ""}>${ikon("silang")}Tidak</label>
-        </div></fieldset>`;
+      const opsi = (nilai, teks, ik) => `<label class="${nilai} ${v === nilai ? "on" : ""}"><input type="radio" name="${n}" value="${nilai}" data-unit="${u.id}" data-q="${q.id}" ${v === nilai ? "checked" : ""} ${TERKIRIM ? "disabled" : ""}>${ikon(ik)}${teks}</label>`;
+      return `<div class="sel" role="radiogroup" aria-labelledby="l-${n} nama-${u.id}">
+        <span class="sel-label" id="l-${n}">${esc(q.label)}</span>
+        <div class="pilih ${TERKIRIM ? "kunci" : ""}">${opsi("ya", "Ya", "cek")}${opsi("tidak", "Tidak", "silang")}</div></div>`;
     }).join("")}
     <div class="unit-galat" data-galat ${galat[u.id] ? "" : "hidden"}>${galat[u.id] ? `<div class="galat" role="alert">${ikon("awas")}<span>${galat[u.id]}</span></div>` : ""}</div>
   </article>`;
@@ -162,7 +157,7 @@ function perbaruiKartu(u) {
   el.classList.toggle("lengkap", lengkap(u));
   el.classList.toggle("baru", unitBaru === u.id);
   el.querySelector("[data-status]").innerHTML = statusUnit(u);
-  Q.forEach(q => { el.querySelectorAll(`input[data-q="${q.id}"]`).forEach(i => { i.checked = i.value === u.jawaban[q.id]; }); });
+  Q.forEach(q => { el.querySelectorAll(`input[data-q="${q.id}"]`).forEach(i => { i.checked = i.value === u.jawaban[q.id]; i.parentElement.classList.toggle("on", i.checked); }); });
   const g = el.querySelector("[data-galat]");
   g.hidden = !galat[u.id];
   g.innerHTML = galat[u.id] ? `<div class="galat" role="alert">${ikon("awas")}<span>${galat[u.id]}</span></div>` : "";
@@ -170,6 +165,9 @@ function perbaruiKartu(u) {
 
 /* ---------- Simpan otomatis ---------- */
 function statusSimpan() {
+  const rel = $("statusRel");
+  rel.className = "rel-simpan " + (adaGagal ? "gagal" : "");
+  rel.innerHTML = sibuk ? `${ikon("putar")} Menyimpan…` : adaGagal ? `${ikon("awas")} Ada jawaban gagal tersimpan` : `${ikon("awan")} ${TERKIRIM ? "Jawaban terkunci" : "Semua jawaban tersimpan"}`;
   const el = $("statusSimpan");
   el.className = "simpan " + (sibuk ? "sibuk" : adaGagal ? "gagal" : "ok");
   el.innerHTML = sibuk ? `${ikon("putar")}<span>Menyimpan…</span>`
@@ -210,6 +208,8 @@ function simpan(uid, qid, val) {
     })
   );
 }
+$("isi").addEventListener("focusin", e => { if (e.target.matches(".pilih input")) e.target.parentElement.classList.toggle("fokus", e.target.matches(":focus-visible")); });
+$("isi").addEventListener("focusout", e => { if (e.target.matches(".pilih input")) e.target.parentElement.classList.remove("fokus"); });
 $("isi").addEventListener("change", e => {
   const i = e.target;
   if (i.matches('input[type="radio"][data-unit]')) simpan(+i.dataset.unit, i.dataset.q, i.value);
@@ -232,8 +232,10 @@ function renderKerja() {
   const sisa = belumLengkapPertama();
   const berikut = STEPS[step + 1];
   $("isi").innerHTML = `
-    <div class="kolom-kepala" aria-hidden="true"><span>Unit</span>${Q.map(q => `<span>${esc(q.label)}</span>`).join("")}</div>
-    ${s.units.map(kartu).join("")}
+    <div class="lembar-unit">
+      <div class="kolom-kepala" aria-hidden="true"><span>Unit</span>${Q.map(q => `<span>${esc(q.label)}</span>`).join("")}</div>
+      ${s.units.map(kartu).join("")}
+    </div>
     <div class="langkah">
       ${step > 0 ? `<button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button>` : ""}
       <div class="kanan">
@@ -244,19 +246,19 @@ function renderKerja() {
 }
 function lembarRapor() {
   const done = jumlahLengkap(ALL), total = ALL.length, sisa = total - done;
-  const nilai = v => v === "ya" ? `<span class="nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai-tidak">Tidak</span>` : `<span class="nilai-kosong">Belum</span>`;
+  const nilai = v => v === "ya" ? `<span class="nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai-tidak">Tidak</span>` : `<span class="nilai-kosong" aria-label="Belum dijawab">—</span>`;
   const baris = TABS.map((t, i) => `<tr class="kelompok"><td colspan="${Q.length + 1}">${i + 1}. ${esc(t.judul)}</td></tr>`
-    + t.units.map(u => `<tr class="${lengkap(u) ? "" : "kurang"}"><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : ` · <button type="button" class="btn-teks" style="border:0;background:none;padding:0;min-height:0;font-weight:700;color:var(--ya)" data-buka="${u.id}">lengkapi</button>`}</td>${Q.map(q => `<td class="c">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
+    + t.units.map(u => `<tr><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : `<button type="button" class="lengkapi" data-buka="${u.id}">Lengkapi ${ikon("kanan")}</button>`}</td>${Q.map(q => `<td class="c" data-label="${esc(q.label)}">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
   return `<div class="lembar">
     <div class="lembar-kepala">
       <div><h2>Lembar jawaban</h2><p>${esc(@json(\App\Pemetaan\Format::namaUnit($opd->nama)))}</p></div>
-      <div class="lembar-ringkas"><div><b>${done}/${total}</b>unit lengkap</div>${sisa && !TERKIRIM ? `<div style="color:var(--tidak)"><b>${sisa}</b>belum lengkap</div>` : ""}</div>
+      <div class="lembar-ringkas"><div><b>${done}/${total}</b>unit lengkap</div>${sisa && !TERKIRIM ? `<div><b>${sisa}</b>belum lengkap</div>` : ""}</div>
     </div>
-    <div class="tabel-gulir"><table class="rapor"><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${baris}</tbody></table></div>
+    <div><table class="rapor"><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${baris}</tbody></table></div>
     <div class="tanda">
-      ${TERKIRIM ? `<p>Jawaban sudah dikirim dan terkunci. Hubungi admin bila ada yang perlu diubah.</p><div class="stempel" aria-label="Terkirim">Terkirim</div>`
+      ${TERKIRIM ? `<p>Jawaban sudah dikirim dan terkunci. Hubungi admin bila ada yang perlu diubah.</p><div class="stempel" role="img" aria-label="Stempel terkirim">Terkirim</div>`
         : sisa ? `<p>Masih ada <b>${sisa} unit</b> yang belum lengkap. Tombol kirim aktif setelah semua unit terisi.</p><button type="button" class="btn btn-utama" disabled>${ikon("kirim")} Kirim jawaban</button>`
-        : `<p>Dengan mengirim, OPD menyatakan jawaban di atas sesuai kondisi setiap unit. Setelah dikirim, jawaban terkunci.</p><button type="button" class="btn btn-utama" data-kirim>${ikon("kirim")} Kirim jawaban</button>`}
+        : `<p>Dengan mengirim, Anda memastikan jawaban di atas sesuai kondisi setiap unit. Setelah dikirim, jawaban terkunci.</p><button type="button" class="btn btn-utama" data-kirim>${ikon("kirim")} Kirim jawaban</button>`}
     </div>
   </div>
   ${step > 0 ? `<div class="langkah"><button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button></div>` : ""}`;
@@ -301,8 +303,13 @@ $("tombolMenu").addEventListener("click", () => {
   const buka = $("relKaki").classList.toggle("buka");
   $("tombolMenu").setAttribute("aria-expanded", buka);
 });
+const tutupMenu = () => { $("relKaki").classList.remove("buka"); $("tombolMenu").setAttribute("aria-expanded", "false"); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") tutupMenu(); });
+document.addEventListener("click", e => { if (!e.target.closest("#relKaki, #tombolMenu")) tutupMenu(); });
+const aturRuangGulir = () => { document.documentElement.style.scrollPaddingTop = matchMedia("(max-width: 900px)").matches ? (document.querySelector(".rel").offsetHeight + 12) + "px" : ""; };
+addEventListener("resize", aturRuangGulir);
 window.addEventListener("beforeunload", e => { if (sibuk) { e.preventDefault(); e.returnValue = ""; } });
 
-renderRel(); renderKerja(); statusSimpan();
+renderRel(); renderKerja(); statusSimpan(); aturRuangGulir();
 </script>
 @endpush
