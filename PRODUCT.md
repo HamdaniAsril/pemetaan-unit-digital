@@ -37,7 +37,8 @@ Kegiatan ini dianggap berhasil kalau semua OPD mengirim penilaian lengkap dan ad
 
 ## Brand Commitments
 
-- Tidak ada logo atau warna resmi yang wajib dipakai. Tampilan cukup terlihat resmi dan profesional.
+- Tidak ada logo atau warna resmi yang wajib dipakai.
+- **Ditetapkan pemilik (17 Nov 2026):** gaya bersih (putih, abu sangat muda) dengan satu aksen cerah **biru elektrik** (sekitar #2F6BFF) dan huruf **Manrope**. Arah "Buku Rapor" (hijau tua + serif) ditolak pemilik.
 - Bahasa antarmuka: Bahasa Indonesia, nadanya ramah, tidak kaku birokratis.
 
 ## Evidence on Hand

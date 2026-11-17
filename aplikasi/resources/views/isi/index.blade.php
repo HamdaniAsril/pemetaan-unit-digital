@@ -31,7 +31,7 @@
 
       @if ($terkirim)
         <div class="terkirim-pita">
-          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}" role="img" aria-label="Stempel terkirim">Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></div>
+          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}"><span class="bulat"><svg class="ikon"><use href="#i-cek"/></svg></span><span>Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></span></div>
           <p><b>Jawaban sudah dikirim pada {{ $opd->submitted_at?->locale('id')->translatedFormat('j F Y, H:i') }}.</b> Terima kasih. Jawaban terkunci; hubungi admin bila ada yang perlu diubah.</p>
         </div>
       @endif
@@ -246,7 +246,7 @@ function renderKerja() {
 }
 function lembarRapor() {
   const done = jumlahLengkap(ALL), total = ALL.length, sisa = total - done;
-  const nilai = v => v === "ya" ? `<span class="nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai-tidak">Tidak</span>` : `<span class="nilai-kosong" aria-label="Belum dijawab">—</span>`;
+  const nilai = v => v === "ya" ? `<span class="nilai nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai nilai-tidak">Tidak</span>` : `<span class="nilai-kosong" aria-label="Belum dijawab">—</span>`;
   const baris = TABS.map((t, i) => `<tr class="kelompok"><td colspan="${Q.length + 1}">${i + 1}. ${esc(t.judul)}</td></tr>`
     + t.units.map(u => `<tr><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : `<button type="button" class="lengkapi" data-buka="${u.id}">Lengkapi ${ikon("kanan")}</button>`}</td>${Q.map(q => `<td class="c" data-label="${esc(q.label)}">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
   return `<div class="lembar">
@@ -256,7 +256,7 @@ function lembarRapor() {
     </div>
     <div><table class="rapor"><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${baris}</tbody></table></div>
     <div class="tanda">
-      ${TERKIRIM ? `<p>Jawaban sudah dikirim dan terkunci. Hubungi admin bila ada yang perlu diubah.</p><div class="stempel" role="img" aria-label="Stempel terkirim">Terkirim</div>`
+      ${TERKIRIM ? `<p>Jawaban sudah dikirim dan terkunci. Hubungi admin bila ada yang perlu diubah.</p><div class="stempel"><span class="bulat">${ikon("cek")}</span><span>Terkirim</span></div>`
         : sisa ? `<p>Masih ada <b>${sisa} unit</b> yang belum lengkap. Tombol kirim aktif setelah semua unit terisi.</p><button type="button" class="btn btn-utama" disabled>${ikon("kirim")} Kirim jawaban</button>`
         : `<p>Dengan mengirim, Anda memastikan jawaban di atas sesuai kondisi setiap unit. Setelah dikirim, jawaban terkunci.</p><button type="button" class="btn btn-utama" data-kirim>${ikon("kirim")} Kirim jawaban</button>`}
     </div>

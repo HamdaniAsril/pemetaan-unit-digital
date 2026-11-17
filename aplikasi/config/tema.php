@@ -5,59 +5,52 @@
 | Halaman OPD dan panel admin membaca dari sini lewat resources/views/partials/token.blade.php,
 | jadi mengganti satu warna cukup di file ini.
 |
-| Peran warna (satu warna satu arti):
-|   sampul*   : shell hijau (rel, login, sidebar admin)
-|   posisi    : HANYA penanda posisi sekarang (tab aktif, cincin fokus, unit yang baru disimpan)
+| Gaya: bersih (putih, abu sangat muda) dengan satu aksen biru elektrik.
+| Peran warna:
+|   aksen*    : tombol utama, tab aktif, progres, tautan, cincin fokus
 |   ya/tidak  : HANYA jawaban Ya / Tidak
 |   galat     : pesan kesalahan
-|   stempel   : tinta stempel TERKIRIM
 */
 return [
     'warna' => [
-        'sampul' => '#16382c',
-        'sampul-2' => '#1e4838',
-        'sampul-3' => '#2a5a47',
-        'sampul-garis' => '#3b6b57',
-        'sampul-tinta' => '#f1ead2',
-        'sampul-tinta-2' => '#b9c7b4',
+        'aksen' => '#2b63f6',         // biru elektrik (dipilih pemilik); sedikit digelapkan dari #2F6BFF agar teks putih ≥4.5:1
+        'aksen-2' => '#1d4fd8',       // hover / tekan
+        'aksen-muda' => '#ebf1ff',    // latar tab aktif, sorotan
+        'aksen-garis' => '#c9d8ff',
+        'aksen-tinta' => '#ffffff',   // teks di atas aksen
 
-        'posisi' => '#d4ad3a',
+        'latar' => '#f6f7f9',
+        'permukaan' => '#ffffff',
+        'garis' => '#e7e9ee',
+        'garis-kuat' => '#d5d9e2',
+        'tinta' => '#141821',
+        'tinta-2' => '#5a6272',
+        'nonaktif' => '#c3c8d2',
+        'nonaktif-tinta' => '#ffffff',
 
-        'kertas' => '#f6f3ea',
-        'halaman' => '#fffdf7',
-        'garis' => '#d6e2d6',
-        'garis-kuat' => '#b5c8b8',
-        'tinta' => '#1c2520',
-        'tinta-2' => '#4d5a52',
-        'nonaktif' => '#9aa79f',
-        'nonaktif-tinta' => '#eef1ee',
-
-        'ya' => '#1d7348',
-        'ya-latar' => '#e2f0e7',
-        'tidak' => '#b0482c',
-        'tidak-latar' => '#f7e5de',
-        'galat' => '#8f1f45',
-        'galat-latar' => '#f8e3ea',
-        'peringatan' => '#8a5a00',
-        'peringatan-latar' => '#fbf0d6',
-        'stempel' => '#46408f',
+        'ya' => '#0f8a48',
+        'ya-latar' => '#e7f6ee',
+        'tidak' => '#d6363c',
+        'tidak-latar' => '#fdecec',
+        'galat' => '#c0182f',
+        'galat-latar' => '#fdecef',
+        'sukses' => '#0f8a48',
+        'sukses-latar' => '#e7f6ee',
     ],
 
     'huruf' => [
-        'serif' => '"Source Serif 4", Georgia, "Times New Roman", serif',
-        'sans' => '"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        'sans' => '"Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
     ],
 
-    // Area kerja hanya memakai "teks" dan "judul"; ukuran lain khusus shell/stempel.
     'ukuran' => [
         'teks-kecil' => '13px',
         'teks' => '16px',
-        'teks-rel' => '18px',
-        'judul' => '22px',
+        'teks-besar' => '18px',
+        'judul' => '24px',
     ],
 
     'bentuk' => [
-        'radius' => '12px',
+        'radius' => '14px',
         'radius-kontrol' => '10px',
         'sentuh' => '44px',
     ],

@@ -10,8 +10,9 @@
 @foreach (array_merge(config('tema.ukuran'), config('tema.bentuk')) as $nama => $nilai)
   --{{ $nama }}: {{ $nilai }};
 @endforeach
-  --bayang-angkat: 0 24px 60px -12px color-mix(in srgb, var(--sampul) 45%, transparent);
-  --tirai: color-mix(in srgb, var(--sampul) 45%, transparent);
+  --bayang: 0 1px 2px color-mix(in srgb, var(--tinta) 6%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--tinta) 14%, transparent);
+  --bayang-angkat: 0 24px 60px -12px color-mix(in srgb, var(--tinta) 30%, transparent);
+  --tirai: color-mix(in srgb, var(--tinta) 40%, transparent);
   --keluar: cubic-bezier(.16, 1, .3, 1);
 }
 </style>

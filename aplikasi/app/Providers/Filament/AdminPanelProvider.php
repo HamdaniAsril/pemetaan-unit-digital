@@ -28,13 +28,13 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Pemetaan Unit Digital')
             ->colors([
-                'primary' => Color::hex(config('tema.warna.sampul-3')),
-                'gray' => Color::Stone,
+                'primary' => Color::hex(config('tema.warna.aksen')),
+                'gray' => Color::Slate,
                 'danger' => Color::hex(config('tema.warna.galat')),
-                'warning' => Color::hex(config('tema.warna.peringatan')),
+                'warning' => Color::Amber,
                 'success' => Color::hex(config('tema.warna.ya')),
             ])
-            ->font('Atkinson Hyperlegible', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
+            ->font('Manrope', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->darkMode(false)
             ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.tema'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
