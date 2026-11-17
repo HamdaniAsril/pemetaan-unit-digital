@@ -11,6 +11,8 @@ class RingkasanStatus extends StatsOverviewWidget
 {
     protected static bool $isLazy = false;
 
+    protected static bool $isDiscovered = false;
+
     protected function getStats(): array
     {
         $jumlah = Opd::query()->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');

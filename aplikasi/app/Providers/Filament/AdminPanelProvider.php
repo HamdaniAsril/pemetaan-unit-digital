@@ -28,7 +28,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Pemetaan Unit Digital')
             ->sidebarWidth('15rem')
-            ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
             ->colors([
                 'primary' => Color::hex(config('tema.warna.aksen')),
@@ -40,10 +39,14 @@ class AdminPanelProvider extends PanelProvider
             ->font('Manrope', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->darkMode(false)
             ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.tema'))
+            // Di HP menu samping selalu tertutup saat halaman dibuka (Filament menyimpan status terakhirnya).
+            ->renderHook(\Filament\View\PanelsRenderHook::BODY_END, fn () => new \Illuminate\Support\HtmlString(
+                '<script>document.addEventListener("alpine:initialized",()=>{if(innerWidth<1024)Alpine.store("sidebar").close()})</script>'
+            ))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dasbor::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([])

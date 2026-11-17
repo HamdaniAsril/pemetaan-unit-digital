@@ -31,7 +31,7 @@ test('tamu diarahkan ke login aplikasi', function () {
 });
 
 test('admin bisa membuka dasbor dan halaman unit', function () {
-    $this->actingAs($this->admin)->get('/admin')->assertOk()->assertSee('Terkirim');
+    $this->actingAs($this->admin)->get('/admin')->assertOk()->assertSee('OPD terkirim');
     $this->get('/admin/opds')->assertOk();
     $this->get('/admin/units')->assertOk();
     $this->get('/admin/pengaturan')->assertOk();
