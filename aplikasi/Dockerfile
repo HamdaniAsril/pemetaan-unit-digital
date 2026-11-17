@@ -1,6 +1,6 @@
 # Aplikasi Pemetaan Unit Digital: satu container PHP-FPM + Nginx (port 8080 di dalam container).
 # Tiga tahap: dasar (PHP + ekstensi), uji (seluruh test dijalankan saat build), produksi (yang dijalankan).
-FROM serversideup/php:8.3-fpm-nginx AS dasar
+FROM serversideup/php:8.4-fpm-nginx AS dasar
 USER root
 RUN install-php-extensions intl gd
 USER www-data
