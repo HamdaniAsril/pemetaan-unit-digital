@@ -56,7 +56,7 @@
         </div>
       @else
       <details class="petunjuk" id="petunjuk" open>
-        <summary><svg class="ikon"><use href="#i-buku"/></svg> Cara menjawab tiga pertanyaan <svg class="ikon chev"><use href="#i-bawah"/></svg></summary>
+        <summary>Cara menjawab tiga pertanyaan <svg class="ikon chev"><use href="#i-bawah"/></svg></summary>
         <div class="petunjuk-isi">
           @foreach ($indikator as $i => $q)
             <section class="indikator">
@@ -259,10 +259,10 @@ function lembarRapor() {
   const done = jumlahLengkap(ALL), total = ALL.length, sisa = total - done;
   const nilai = v => v === "ya" ? `<span class="nilai nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai nilai-tidak">Tidak</span>` : `<span class="nilai-kosong">Belum</span>`;
   const baris = TABS.map((t, i) => `<tr class="kelompok"><td colspan="${Q.length + 1}">${i + 1}. ${esc(t.judul)}</td></tr>`
-    + t.units.map(u => `<tr><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : `<button type="button" class="lengkapi" data-buka="${u.id}">Lengkapi ${ikon("kanan")}</button>`}</td>${Q.map(q => `<td class="c" data-label="${esc(q.label)}">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
+    + t.units.map(u => `<tr><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : `<button type="button" class="lengkapi" data-buka="${u.id}">Lengkapi</button>`}</td>${Q.map(q => `<td class="c" data-label="${esc(q.label)}">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
   return `<div class="lembar">
     <div class="lembar-kepala">
-      <div><h2>Lembar jawaban</h2><p>${esc(@json(\App\Pemetaan\Format::namaUnit($opd->nama)))}</p></div>
+      <div><h2>Lembar jawaban</h2><p>${esc(@json(\App\Pemetaan\Format::namaUnit($opd->nama)))}</p><span class="butir-progres" style="margin-top:10px" aria-hidden="true">${ALL.map(u => `<i class="${lengkap(u) ? "isi" : ""}"></i>`).join("")}</span></div>
       <div class="lembar-ringkas"><div><b>${done}/${total}</b>unit lengkap</div>${sisa && !TERKIRIM ? `<div><b>${sisa}</b>belum lengkap</div>` : ""}</div>
     </div>
     <div><table class="rapor"><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${baris}</tbody></table></div>

@@ -13,5 +13,10 @@
   }
   /* Target sentuh minimal 44px untuk tombol ikon di tabel (R-03). */
   .fi-ta-actions .fi-icon-btn, .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn { width: 2.75rem; height: 2.75rem; }
+  /* Motif identitas: satu butir per unit, terisi biru bila lengkap (sama dengan rel tab form OPD). */
+  .butir-progres { display: flex; flex-wrap: wrap; gap: 3px; max-width: 220px; margin-bottom: 4px; }
+  .butir-progres i { width: 14px; height: 5px; border-radius: 3px; background: var(--garis); }
+  .butir-progres i.isi { background: var(--aksen); }
+  .butir-angka { color: var(--tinta-2); font-size: .875rem; }
   ::selection { background: var(--aksen-garis); }
 </style>

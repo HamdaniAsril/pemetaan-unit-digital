@@ -65,3 +65,8 @@ test('tabel tindak lanjut hanya berisi opd yang belum selesai, progres terendah 
         ->assertCanSeeTableRecords([$this->c, $this->b], inOrder: true)
         ->assertCanNotSeeTableRecords([$this->a]);
 });
+
+test('motif butir progres tampil di tabel tindak lanjut', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(PerluTindakLanjut::class)->assertSeeHtml('class="butir-progres"');
+});

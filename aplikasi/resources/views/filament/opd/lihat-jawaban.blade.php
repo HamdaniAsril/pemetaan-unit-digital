@@ -4,7 +4,7 @@
         .lj-ringkas strong { color: var(--tinta); }
         .lj-daftar { display: grid; }
         .lj-kepala, .lj-baris { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 8.5rem); gap: .75rem; align-items: center; padding: .65rem 0; }
-        .lj-kepala { color: var(--tinta-2); font-size: var(--teks-kecil); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--garis); }
+        .lj-kepala { color: var(--tinta-2); font-size: var(--teks-kecil); font-weight: 700; border-bottom: 1px solid var(--garis); }
         .lj-kepala span:not(:first-child) { text-align: center; }
         .lj-baris + .lj-baris { border-top: 1px solid var(--garis); }
         .lj-nama { min-width: 0; overflow-wrap: anywhere; }

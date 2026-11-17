@@ -5,11 +5,7 @@
   <section class="sampul" aria-labelledby="judul-aplikasi">
     <div class="sampul-instansi">Pemerintah Kabupaten Rokan Hilir</div>
     <h1 class="sampul-judul" id="judul-aplikasi">Pemetaan<span>Unit Digital</span></h1>
-    <ol class="sampul-langkah">
-      <li><svg class="ikon"><use href="#i-buku"/></svg><div><b>Satu tab untuk setiap bidang</b>Isi dari OPD, lalu bagian, bidang, dan unit di bawahnya.</div></li>
-      <li><svg class="ikon"><use href="#i-centang-daftar"/></svg><div><b>Tiga pertanyaan Ya atau Tidak</b>Pertanyaannya sama untuk setiap unit, lengkap dengan petunjuk.</div></li>
-      <li><svg class="ikon"><use href="#i-awan"/></svg><div><b>Tersimpan otomatis</b>Boleh dicicil. Kirim setelah semua unit terisi.</div></li>
-    </ol>
+    <p class="sampul-ajakan">Setiap OPD menilai unit kerjanya dengan tiga pertanyaan Ya atau Tidak. Jawaban tersimpan otomatis, jadi boleh dicicil. Kirim setelah semua unit terisi.</p>
   </section>
 
   <section class="masuk-form">
@@ -33,7 +29,7 @@
           <button type="button" data-lihat-sandi="password" aria-label="Tampilkan kata sandi" aria-pressed="false"><svg class="ikon"><use href="#i-mata"/></svg></button>
         </div>
       </div>
-      <button class="btn btn-utama" type="submit">Masuk <svg class="ikon"><use href="#i-kanan"/></svg></button>
+      <button class="btn btn-utama" type="submit">Masuk</button>
       <p class="masuk-catatan">Lupa kata sandi atau belum punya akun? Hubungi admin pemetaan untuk mengatur ulang.</p>
     </form>
   </section>

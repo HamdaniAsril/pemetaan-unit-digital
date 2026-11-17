@@ -40,8 +40,10 @@ class PerluTindakLanjut extends TableWidget
                     ->color(fn (StatusOpd $state) => match ($state) {
                         StatusOpd::Terkirim => 'danger', StatusOpd::Mengisi => 'warning', StatusOpd::BelumMulai => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('unit_lengkap')->label('Progres')
-                    ->formatStateUsing(fn ($state, Opd $record) => "{$state}/{$record->unit_total} unit"),
+                Tables\Columns\TextColumn::make('unit_lengkap')->label('Progres')->html()
+                    ->formatStateUsing(fn ($state, Opd $record) => '<span class="butir-progres" aria-hidden="true">'
+                        .str_repeat('<i class="isi"></i>', (int) $state).str_repeat('<i></i>', max(0, (int) $record->unit_total - (int) $state))
+                        .'</span><span class="butir-angka">'.e("{$state}/{$record->unit_total} unit").'</span>'),
             ])
             ->recordUrl(fn (Opd $record) => OpdResource::getUrl('view', ['record' => $record]))
             ->emptyStateHeading('Semua OPD sudah mengirim')

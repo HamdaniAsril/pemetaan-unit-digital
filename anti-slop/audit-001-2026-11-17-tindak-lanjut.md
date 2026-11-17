@@ -13,3 +13,29 @@ Diperbaiki sesuai permintaan pemilik: **nomor 1 sampai 5** (semua temuan priorit
 **Hasil test:** 96 lulus (sebelumnya 81, ditambah 15 test baru dari audit ini).
 
 **Yang tidak dicek visual:** halaman admin (Pengaturan, Kelola unit, ukuran tombol ikon). Saat itu pemilik sedang login sebagai OPD di browser, jadi sesinya tidak diganggu. Halaman-halaman ini dicakup test Livewire, tetapi belum dilihat langsung.
+
+---
+
+## Putaran 2: nomor 6 sampai 13
+
+| No | Temuan | Perbaikan | Bukti |
+|---|---|---|---|
+| 6 | Ikon bergaya Lucide tanpa alasan (R-04) | Ikon hiasan dihapus: buku di "Cara menjawab", daftar centang dan kotak ikon di login, panah di "Masuk" dan "Lengkapi". Sprite dipangkas menjadi 17 ikon yang dipakai. Alasan gaya ikon (garis 2px berujung bulat, serasi dengan Manrope, hanya untuk kontrol yang fungsinya diperjelas ikon) ditulis di DESIGN.md. | Test `R-04/R-21/R-20` memeriksa "Alasan ikon" di DESIGN.md. |
+| 7 | Label kapital berjarak lebar (R-06) | Kepala kolom form, tabel Periksa, dan Lihat jawaban admin kini huruf biasa, 13px, tebal 700. | Test `R-06` memindai `app.css` dan `lihat-jawaban.blade.php`. |
+| 8 | Panah hiasan (R-08) | Panah dilepas dari "Masuk" dan "Lengkapi". Panah pada "Sebelumnya" dan "Lanjut: …" tetap ada karena menunjukkan arah navigasi. | Test `R-08`. Di browser, tombol berisi "Lengkapi" saja (tinggi 44px). |
+| 9 | Bayangan berwarna dan bayangan kartu (R-12, R-13) | Bayangan biru, hijau, dan merah di tombol utama serta pilihan Ya/Tidak dihapus. Kartu (daftar unit, lembar, pita terkirim, form kata sandi) kini cukup garis 1px. Bayangan hanya tersisa di dialog, menu HP, dan rel yang menempel di HP; alasannya ditulis di DESIGN.md. | Test `R-12/R-13`. |
+| 10 | Cincin hiasan di login (R-01, R-07) | Dihapus. Panel biru kini polos. | Test `R-01/R-07/R-05`. |
+| 11 | Pola "3 langkah berikon" di login (R-05) | Diganti satu kalimat tugas: "Setiap OPD menilai unit kerjanya dengan tiga pertanyaan Ya atau Tidak. Jawaban tersimpan otomatis, jadi boleh dicicil. Kirim setelah semua unit terisi." | Test yang sama, ditambah tangkapan layar login 1440px. |
+| 12 | Alasan tema terang (R-21) | Alasannya ditulis di DESIGN.md: dipakai di kantor siang hari dan dari HP, pemilik meminta putih bersih, dan satu tema berarti satu set kontras yang teruji. | Test `R-04/R-21/R-20`. |
+| 13 | Identitas dan dial (R-20, Blok 3) | DESIGN.md kini memuat Design Read, `Dial: ENERGY 1 / RHYTHM 1 / MOTION 1` beserta alasannya, dan **motif identitas: butir progres** (satu butir per unit). Motif ini diulang di rel tab, kepala lembar Periksa & Kirim, dan kolom Progres di dasbor admin ("Perlu ditindaklanjuti"). | Test `motif butir progres tampil di tabel tindak lanjut` dan pemeriksaan DESIGN.md. Di browser, butir tampil di dasbor admin. |
+
+**Hasil test:** 102 lulus (6 test baru di putaran ini). Detektor desain Impeccable: tidak ada temuan.
+
+**Dicek di browser:**
+- form OPD di 1440px (tab dan lembar Periksa)
+- login di 1440px
+- admin: dasbor, Pengaturan, dan Kelola unit di 1440px, serta tombol ikon tabel OPD di 375px (terukur 44×44px)
+
+Sesi browser dikembalikan ke akun `dishub`.
+
+**Semua 13 temuan audit #001 sudah ditangani.**

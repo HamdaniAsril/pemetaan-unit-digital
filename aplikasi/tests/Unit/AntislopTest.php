@@ -58,3 +58,34 @@ test('R-25: teks di panel biru login tidak dipudarkan', function () {
     expect($css)->not->toMatch('/\.sampul-instansi \{[^}]*opacity/')
         ->and($css)->not->toMatch('/\.sampul-langkah li \{[^}]*color-mix/');
 });
+
+test('R-06: tidak ada label huruf kapital berjarak lebar', function () {
+    foreach ([resource_path('css/app.css'), resource_path('views/filament/opd/lihat-jawaban.blade.php')] as $f) {
+        expect(file_get_contents($f))->not->toContain('text-transform: uppercase');
+    }
+});
+
+test('R-08: panah hanya pada tombol navigasi, tidak pada Masuk dan Lengkapi', function () {
+    expect(file_get_contents(resource_path('views/auth/login.blade.php')))->not->toContain('#i-kanan');
+    expect(file_get_contents(resource_path('views/isi/index.blade.php')))->not->toMatch('/class="lengkapi"[^`]*ikon\("kanan"\)/');
+});
+
+test('R-12/R-13: tanpa bayangan berwarna dan tanpa bayangan kartu', function () {
+    $css = file_get_contents(resource_path('css/app.css'));
+    expect($css)->not->toMatch('/box-shadow:[^;]*var\(--(aksen|ya|tidak)\)/')
+        ->and($css)->not->toMatch('/\.(lembar-unit|lembar|terkirim-pita|kartu-form form) \{[^}]*box-shadow/');
+});
+
+test('R-01/R-07/R-05: panel login tanpa cincin hiasan dan tanpa daftar 3 langkah berikon', function () {
+    expect(file_get_contents(resource_path('css/app.css')))->not->toContain('.sampul::after');
+    expect(file_get_contents(resource_path('views/auth/login.blade.php')))->not->toContain('sampul-langkah');
+});
+
+test('R-04/R-21/R-20: DESIGN.md menulis alasan ikon, tema terang, dial, dan motif', function () {
+    $d = file_get_contents(base_path('../DESIGN.md'));
+    expect($d)->toContain('Dial: ENERGY 1 / RHYTHM 1 / MOTION 1')
+        ->toContain('Design Read')
+        ->toContain('Motif identitas')
+        ->toContain('Alasan tema terang')
+        ->toContain('Alasan ikon');
+});
