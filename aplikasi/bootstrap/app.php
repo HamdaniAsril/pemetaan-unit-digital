@@ -11,7 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias(['opd' => \App\Http\Middleware\HanyaOpd::class]);
+        $middleware->redirectUsersTo(fn () => \App\Http\Controllers\Auth\LoginController::beranda());
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
