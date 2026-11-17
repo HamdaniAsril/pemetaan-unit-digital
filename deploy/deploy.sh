@@ -27,8 +27,8 @@ main() {
   docker build --target uji -t pemetaan-app:uji .
 
   # Cadangan database sebelum container diganti (migrasi berjalan otomatis saat start).
-  if [ -n "$(docker compose ps --status running -q app 2>/dev/null)" ]; then
-    docker compose exec -T app php artisan pemetaan:backup || echo "Peringatan: backup sebelum deploy gagal."
+  if [ -n "$(docker compose ps --status running -q pemetaan 2>/dev/null)" ]; then
+    docker compose exec -T pemetaan php artisan pemetaan:backup || echo "Peringatan: backup sebelum deploy gagal."
   fi
   docker compose up -d --build --remove-orphans
 

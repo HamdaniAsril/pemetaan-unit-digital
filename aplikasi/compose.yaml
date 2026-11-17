@@ -11,7 +11,9 @@ x-app: &app
     - pemetaan_storage:/var/www/html/storage
 
 services:
-  app:
+  # Nama layanan JANGAN "app": jaringan proxy dipakai bersama akupeta, yang Nginx-nya mengirim PHP ke host "app".
+  # Nama layanan otomatis menjadi alias DNS di setiap jaringan, jadi "app" akan merebut lalu lintas akupeta.
+  pemetaan:
     <<: *app
     container_name: pemetaan_app
     # 127.0.0.1:8090 untuk SSH tunnel; publik hanya lewat Nginx bersama (jaringan proxy).
@@ -34,7 +36,7 @@ services:
       PEMETAAN_PERAN: scheduler
       AUTORUN_ENABLED: "false"
     depends_on:
-      - app
+      - pemetaan
 
 volumes:
   pemetaan_storage:
