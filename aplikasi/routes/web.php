@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UnduhController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\GantiPasswordController;
 use App\Http\Controllers\IsiController;
@@ -22,4 +23,9 @@ Route::middleware(['auth', 'opd'])->group(function () {
     Route::get('/isi', [IsiController::class, 'index'])->name('isi');
     Route::post('/isi/jawaban', [IsiController::class, 'jawaban'])->middleware('throttle:240,1');
     Route::post('/isi/kirim', [IsiController::class, 'kirim']);
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin/unduh')->group(function () {
+    Route::get('/rekap', [UnduhController::class, 'rekap'])->name('unduh.rekap');
+    Route::get('/backup', [UnduhController::class, 'backup'])->name('unduh.backup');
 });
