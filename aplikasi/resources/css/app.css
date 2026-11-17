@@ -116,3 +116,9 @@
   .page { max-width: 480px; margin: 24px auto; padding: 0 16px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
   [x-cloak] { display: none !important; }
+  header nav a, header nav button { white-space: nowrap; }
+  @media (max-width: 640px) {
+    header .sub { display: none; }
+    header .opd { font-size: 14px; }
+    header nav a, header nav button { padding: 6px 8px; font-size: 12px; }
+  }

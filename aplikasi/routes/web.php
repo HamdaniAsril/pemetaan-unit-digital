@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\GantiPasswordController;
+use App\Http\Controllers\IsiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect(auth()->check() ? LoginController::beranda() : '/login'));
@@ -15,4 +16,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/akun/password', [GantiPasswordController::class, 'edit'])->name('akun.password');
     Route::post('/akun/password', [GantiPasswordController::class, 'update']);
+});
+
+Route::middleware(['auth', 'opd'])->group(function () {
+    Route::get('/isi', [IsiController::class, 'index'])->name('isi');
+    Route::post('/isi/jawaban', [IsiController::class, 'jawaban'])->middleware('throttle:240,1');
+    Route::post('/isi/kirim', [IsiController::class, 'kirim']);
 });

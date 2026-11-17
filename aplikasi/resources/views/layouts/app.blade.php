@@ -17,7 +17,7 @@
   </div>
   <nav>
     @if (! request()->routeIs('akun.password'))
-      <a href="{{ route('akun.password') }}">Ganti kata sandi</a>
+      <a href="{{ route('akun.password') }}">Kata sandi</a>
     @else
       <a href="/">Kembali</a>
     @endif

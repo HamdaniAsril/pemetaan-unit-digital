@@ -15,5 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn () => \App\Http\Controllers\Auth\LoginController::beranda());
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['pesan' => 'Sesi berakhir, silakan masuk lagi.'], 401);
+            }
+        });
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['pesan' => 'Sesi berakhir, silakan masuk lagi.'], 401);
+            }
+        });
     })->create();
