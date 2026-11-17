@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use App\Pemetaan\Indikator;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -26,7 +27,8 @@ class Pengaturan extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill(['kontak_admin' => Setting::ambil('kontak_admin')]);
+        $this->form->fill(['kontak_admin' => Setting::ambil('kontak_admin')]
+            + collect(Indikator::KODE)->mapWithKeys(fn ($k) => ['petunjuk_'.$k => Indikator::petunjukAktif($k)])->all());
     }
 
     public function form(Form $form): Form
@@ -34,6 +36,13 @@ class Pengaturan extends Page implements HasForms
         return $form->statePath('data')->schema([
             Forms\Components\TextInput::make('kontak_admin')->label('Kontak admin')->maxLength(200)
                 ->helperText('Tampil di form OPD: "Unit tidak sesuai? Hubungi admin: …". Kosongkan untuk menyembunyikan.'),
+            Forms\Components\Section::make('Petunjuk menjawab')
+                ->description(Indikator::petunjukDikonfirmasi()
+                    ? 'Teks ini tampil di form OPD di bawah setiap pertanyaan.'
+                    : 'Teks di bawah masih draf dan tampil ke OPD dengan label "contoh". Periksa, ubah bila perlu, lalu simpan untuk mengonfirmasi.')
+                ->schema(collect(Indikator::KODE)->map(fn ($k) => Forms\Components\Textarea::make('petunjuk_'.$k)
+                    ->label(Indikator::label($k))->helperText(Indikator::pertanyaan($k))
+                    ->rows(3)->required()->maxLength(600))->all()),
         ]);
     }
 
@@ -41,6 +50,10 @@ class Pengaturan extends Page implements HasForms
     {
         $data = $this->form->getState();
         Setting::simpan('kontak_admin', filled($data['kontak_admin'] ?? null) ? $data['kontak_admin'] : null);
+        foreach (Indikator::KODE as $k) {
+            Setting::simpan('petunjuk_'.$k, trim($data['petunjuk_'.$k]));
+        }
+        Setting::simpan('petunjuk_dikonfirmasi', '1');
         Notification::make()->title('Pengaturan disimpan')->success()->send();
     }
 }

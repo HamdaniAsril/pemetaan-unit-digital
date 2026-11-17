@@ -161,3 +161,15 @@ test('notifikasi kata sandi baru menampilkan username dan kata sandi di baris te
     $body = (string) collect(session('filament.notifications'))->last()['body'];
     expect($body)->toContain('Username: <strong>satu</strong><br>')->toContain('Kata sandi: <strong>');
 });
+
+test('pengaturan menyimpan petunjuk indikator dan menandainya dikonfirmasi', function () {
+    $this->actingAs($this->admin);
+    Livewire::test(Pengaturan::class)
+        ->assertFormSet(['petunjuk_mandat' => \App\Pemetaan\Indikator::petunjuk('mandat')])
+        ->fillForm(['petunjuk_keluaran' => 'Jawab Ya bila unit mengelola aplikasi.'])
+        ->call('simpan')
+        ->assertHasNoFormErrors();
+
+    expect(Setting::ambil('petunjuk_keluaran'))->toBe('Jawab Ya bila unit mengelola aplikasi.')
+        ->and(Setting::ambil('petunjuk_dikonfirmasi'))->toBe('1');
+});

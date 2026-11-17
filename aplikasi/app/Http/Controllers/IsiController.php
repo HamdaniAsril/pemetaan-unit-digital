@@ -47,8 +47,9 @@ class IsiController extends Controller
             'kontak' => Setting::ambil('kontak_admin'),
             'indikator' => collect(Indikator::KODE)->map(fn ($k) => [
                 'id' => $k, 'label' => Indikator::label($k), 'pertanyaan' => Indikator::pertanyaan($k),
-                'ringkas' => Indikator::ringkas($k), 'petunjuk' => Indikator::petunjuk($k),
+                'ringkas' => Indikator::ringkas($k), 'petunjuk' => Indikator::petunjukAktif($k),
             ]),
+            'petunjukDikonfirmasi' => Indikator::petunjukDikonfirmasi(),
             'baruTerkirim' => session()->has('status'),
         ]);
     }
@@ -80,7 +81,7 @@ class IsiController extends Controller
     {
         try {
             $this->penilaian->kirim($request->user()->opd);
-        } catch (BelumLengkap|JawabanTerkunci $e) {
+        } catch (BelumLengkap|JawabanTerkunci|\App\Pemetaan\Exceptions\TidakAdaUnit $e) {
             return redirect('/isi')->withErrors(['kirim' => $e->getMessage()]);
         }
 

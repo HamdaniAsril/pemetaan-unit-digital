@@ -9,6 +9,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Pemetaan\Exceptions\BelumLengkap;
 use App\Pemetaan\Exceptions\JawabanTerkunci;
+use App\Pemetaan\Exceptions\TidakAdaUnit;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -120,6 +121,9 @@ final class Penilaian
             throw new JawabanTerkunci;
         }
         ['terjawab' => $terjawab, 'total' => $total] = $this->progres($opd);
+        if ($total === 0) {
+            throw new TidakAdaUnit;
+        }
         if ($terjawab < $total) {
             throw new BelumLengkap($total - $terjawab);
         }

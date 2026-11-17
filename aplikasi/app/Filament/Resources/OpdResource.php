@@ -52,8 +52,8 @@ class OpdResource extends Resource
 
                         return "{$p['terjawab']}/{$p['total']} unit".($penilaian->perluDilengkapi($record) ? ' · perlu dilengkapi' : '');
                     }),
-                Tables\Columns\TextColumn::make('jawaban_terakhir')->label('Diubah terakhir')->dateTime('j M Y H:i')->placeholder('–')->sortable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('submitted_at')->label('Dikirim')->dateTime('j M Y H:i')->placeholder('–')->sortable()->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('jawaban_terakhir')->label('Diubah terakhir')->dateTime('j M Y H:i')->placeholder('Belum ada')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('submitted_at')->label('Dikirim')->dateTime('j M Y H:i')->placeholder('Belum dikirim')->sortable()->visibleFrom('xl'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

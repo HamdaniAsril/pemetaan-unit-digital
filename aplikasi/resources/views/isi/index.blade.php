@@ -38,7 +38,7 @@
 
       <div class="kerja-kepala">
         <div>
-          <h1 id="judul" tabindex="-1"></h1>
+          <h1 id="judul" tabindex="-1">{{ $tabs->isEmpty() ? 'Isian pemetaan' : '' }}</h1>
           <p id="subjudul"></p>
           @if ($kontak)
             <p class="kontak">Unit tidak sesuai? Hubungi admin: {{ $kontak }}</p>
@@ -49,6 +49,12 @@
         </div>
       </div>
 
+      @if ($tabs->isEmpty())
+        <div class="kosong" role="status">
+          <h2>Belum ada unit yang perlu dinilai</h2>
+          <p>Daftar unit untuk OPD ini masih kosong. Hubungi admin pemetaan untuk menambahkan unit{{ $kontak ? ' ('.$kontak.')' : '' }}.</p>
+        </div>
+      @else
       <details class="petunjuk" id="petunjuk" open>
         <summary><svg class="ikon"><use href="#i-buku"/></svg> Cara menjawab tiga pertanyaan <svg class="ikon chev"><use href="#i-bawah"/></svg></summary>
         <div class="petunjuk-isi">
@@ -56,13 +62,17 @@
             <section class="indikator">
               <h3><span class="no">{{ $i + 1 }}</span> {{ $q['label'] }}</h3>
               <p class="resmi">{{ $q['pertanyaan'] }}</p>
-              <p class="ya-bila">{!! $q['petunjuk'] !!}</p>
+              <p class="ya-bila">{{ $q['petunjuk'] }}</p>
             </section>
           @endforeach
         </div>
+        @unless ($petunjukDikonfirmasi)
+          <span class="petunjuk-label">Contoh penjelasan, belum dikonfirmasi admin</span>
+        @endunless
       </details>
 
       <div id="isi"></div>
+      @endif
     </div>
   </main>
 </div>
@@ -81,6 +91,7 @@
 @endsection
 
 @push('scripts')
+@if ($tabs->isNotEmpty())
 <script>
 const TABS = @json($tabs);
 const Q = @json($indikator->map(fn ($q) => ['id' => $q['id'], 'label' => $q['label']])->values());
@@ -246,7 +257,7 @@ function renderKerja() {
 }
 function lembarRapor() {
   const done = jumlahLengkap(ALL), total = ALL.length, sisa = total - done;
-  const nilai = v => v === "ya" ? `<span class="nilai nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai nilai-tidak">Tidak</span>` : `<span class="nilai-kosong" aria-label="Belum dijawab">—</span>`;
+  const nilai = v => v === "ya" ? `<span class="nilai nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai nilai-tidak">Tidak</span>` : `<span class="nilai-kosong">Belum</span>`;
   const baris = TABS.map((t, i) => `<tr class="kelompok"><td colspan="${Q.length + 1}">${i + 1}. ${esc(t.judul)}</td></tr>`
     + t.units.map(u => `<tr><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : `<button type="button" class="lengkapi" data-buka="${u.id}">Lengkapi ${ikon("kanan")}</button>`}</td>${Q.map(q => `<td class="c" data-label="${esc(q.label)}">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
   return `<div class="lembar">
@@ -312,4 +323,12 @@ window.addEventListener("beforeunload", e => { if (sibuk) { e.preventDefault(); 
 
 renderRel(); renderKerja(); statusSimpan(); aturRuangGulir();
 </script>
+@else
+<script>
+document.getElementById("tombolMenu").addEventListener("click", () => {
+  const buka = document.getElementById("relKaki").classList.toggle("buka");
+  document.getElementById("tombolMenu").setAttribute("aria-expanded", buka);
+});
+</script>
+@endif
 @endpush

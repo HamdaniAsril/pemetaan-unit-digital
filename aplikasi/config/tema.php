@@ -25,16 +25,16 @@ return [
         'garis-kuat' => '#d5d9e2',
         'tinta' => '#141821',
         'tinta-2' => '#5a6272',
-        'nonaktif' => '#c3c8d2',
-        'nonaktif-tinta' => '#ffffff',
+        'nonaktif' => '#e8ebf0',
+        'nonaktif-tinta' => '#5a6272',  // ≥4.5:1 agar alasan tombol nonaktif tetap terbaca
 
-        'ya' => '#0f8a48',
+        'ya' => '#0c7a3f',            // ≥4.5:1 untuk teks putih dan di atas ya-latar
         'ya-latar' => '#e7f6ee',
-        'tidak' => '#d6363c',
+        'tidak' => '#c42d33',         // ≥4.5:1 untuk teks putih dan di atas tidak-latar
         'tidak-latar' => '#fdecec',
         'galat' => '#c0182f',
         'galat-latar' => '#fdecef',
-        'sukses' => '#0f8a48',
+        'sukses' => '#0c7a3f',
         'sukses-latar' => '#e7f6ee',
     ],
 

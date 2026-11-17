@@ -102,3 +102,24 @@ test('format nama unit', function () {
         ->and(Format::namaUnit('SUB BIDANG PENDAFTARAN PAJAK BUMI DAN BANGUNAN (PBB-P2)'))->toBe('Sub Bidang Pendaftaran Pajak Bumi dan Bangunan (PBB-P2)')
         ->and(Format::namaUnit('UPT PENDAPATAN WILAYAH IV'))->toBe('UPT Pendapatan Wilayah IV');
 });
+
+test('opd tanpa unit dinilai melihat keadaan kosong dan tidak bisa mengirim', function () {
+    $this->kepala->update(['dinilai' => false]);
+    $this->bidang->update(['aktif' => false]);
+
+    $this->actingAs($this->user)->get('/isi')->assertOk()
+        ->assertSee('Belum ada unit yang perlu dinilai')
+        ->assertDontSee('id="petunjuk"', false);
+    $this->post('/isi/kirim')->assertSessionHasErrors(['kirim' => 'Belum ada unit yang bisa dinilai. Hubungi admin.']);
+    expect($this->opd->fresh()->status)->not->toBe(StatusOpd::Terkirim);
+});
+
+test('petunjuk berlabel contoh sampai dikonfirmasi admin', function () {
+    $this->actingAs($this->user)->get('/isi')->assertSee('Contoh penjelasan, belum dikonfirmasi admin');
+
+    Setting::simpan('petunjuk_mandat', 'Jawab Ya bila ada SK resmi.');
+    Setting::simpan('petunjuk_dikonfirmasi', '1');
+
+    $this->get('/isi')->assertSee('Jawab Ya bila ada SK resmi.')
+        ->assertDontSee('Contoh penjelasan, belum dikonfirmasi admin');
+});

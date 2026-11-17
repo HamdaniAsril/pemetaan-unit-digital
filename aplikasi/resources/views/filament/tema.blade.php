@@ -11,5 +11,7 @@
     .fi-wi-stats-overview-stat { padding: .875rem 1rem !important; }
     .fi-wi-stats-overview-stat-value { font-size: 1.5rem !important; }
   }
+  /* Target sentuh minimal 44px untuk tombol ikon di tabel (R-03). */
+  .fi-ta-actions .fi-icon-btn, .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn { width: 2.75rem; height: 2.75rem; }
   ::selection { background: var(--aksen-garis); }
 </style>

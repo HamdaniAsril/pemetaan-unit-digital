@@ -47,7 +47,7 @@
                             @php($v = $u->answer?->{$k})
                             <div class="lj-sel" role="cell">
                                 <span class="label">{{ \App\Pemetaan\Indikator::label($k) }}</span>
-                                @if ($v === null) <span class="lj-nilai lj-kosong" aria-label="Belum dijawab">—</span>
+                                @if ($v === null) <span class="lj-nilai lj-kosong">Belum</span>
                                 @elseif ($v) <span class="lj-nilai lj-ya">Ya</span>
                                 @else <span class="lj-nilai lj-tidak">Tidak</span>
                                 @endif

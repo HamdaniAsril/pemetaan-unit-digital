@@ -93,7 +93,8 @@ class UnitResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('opd.nama')->label('OPD')->formatStateUsing(fn ($state) => Format::namaUnit($state))->wrap()->toggleable()->visibleFrom('lg'),
                 Tables\Columns\TextColumn::make('nama_unit')->label('Unit')->searchable()->wrap()
-                    ->formatStateUsing(fn ($state, Unit $record) => str_repeat('— ', $record->level).Format::namaUnit($state)),
+                    ->formatStateUsing(fn ($state, Unit $record) => str_repeat("\u{00A0}", $record->level * 4).Format::namaUnit($state))
+                    ->description(fn (Unit $record) => ['OPD', 'Bagian / Bidang / UPT', 'Subbagian / Subbidang / Seksi', 'Level 3'][$record->level] ?? null),
                 Tables\Columns\TextColumn::make('kategori')->toggleable()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('parent.nama_unit')->label('Induk')->formatStateUsing(fn ($state) => Format::namaUnit($state))->wrap()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('dinilai')->boolean()->visibleFrom('sm'),

@@ -191,3 +191,11 @@ test('unit level 1 di bawah unit level 1 lain tidak tampil dua kali', function (
     expect($ids)->toHaveCount(count(array_unique($ids)))
         ->and(count($ids))->toBe(6);
 });
+
+test('kirim ditolak bila opd tidak punya unit yang dinilai', function () {
+    $opd = Opd::factory()->create();
+    Unit::factory()->for($opd)->create(['level' => 0, 'dinilai' => false]);
+
+    expect(fn () => $this->svc->kirim($opd))->toThrow(\App\Pemetaan\Exceptions\TidakAdaUnit::class)
+        ->and($opd->fresh()->status)->toBe(StatusOpd::BelumMulai);
+});
