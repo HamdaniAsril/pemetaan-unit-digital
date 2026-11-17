@@ -27,6 +27,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Pemetaan Unit Digital')
+            ->sidebarWidth('15rem')
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth('full')
             ->colors([
                 'primary' => Color::hex(config('tema.warna.aksen')),
                 'gray' => Color::Slate,

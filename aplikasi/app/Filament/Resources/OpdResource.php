@@ -37,25 +37,23 @@ class OpdResource extends Resource
             ->paginated([25, 50])
             ->defaultPaginationPageOption(50)
             ->columns([
-                Tables\Columns\TextColumn::make('urutan')->label('No')->sortable(),
-                Tables\Columns\TextColumn::make('nama')->label('OPD')->searchable()->wrap()->grow()
-                    ->extraAttributes(['style' => 'min-width: 16rem'])
-                    ->formatStateUsing(fn (string $state) => Format::namaUnit($state)),
-                Tables\Columns\TextColumn::make('user.username')->label('Username')->placeholder('Belum ada akun'),
+                Tables\Columns\TextColumn::make('urutan')->label('No')->sortable()->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('nama')->label('OPD')->searchable()->wrap()
+                    ->formatStateUsing(fn (string $state) => Format::namaUnit($state))
+                    ->description(fn (Opd $record) => $record->user?->username, position: 'below'),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (StatusOpd $state) => $state->label())
                     ->color(fn (StatusOpd $state) => match ($state) {
                         StatusOpd::Terkirim => 'success', StatusOpd::Mengisi => 'warning', StatusOpd::BelumMulai => 'gray',
                     })
-                    ->description(fn (Opd $record) => app(Penilaian::class)->perluDilengkapi($record) ? 'Perlu dilengkapi' : null),
-                Tables\Columns\TextColumn::make('progres')->label('Terjawab')
-                    ->state(function (Opd $record) {
-                        $p = app(Penilaian::class)->progres($record);
+                    ->description(function (Opd $record) {
+                        $penilaian = app(Penilaian::class);
+                        $p = $penilaian->progres($record);
 
-                        return "{$p['terjawab']}/{$p['total']}";
+                        return "{$p['terjawab']}/{$p['total']} unit".($penilaian->perluDilengkapi($record) ? ' · perlu dilengkapi' : '');
                     }),
                 Tables\Columns\TextColumn::make('jawaban_terakhir')->label('Diubah terakhir')->dateTime('j M Y H:i')->placeholder('–')->sortable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('submitted_at')->label('Dikirim')->dateTime('j M Y H:i')->placeholder('–')->sortable(),
+                Tables\Columns\TextColumn::make('submitted_at')->label('Dikirim')->dateTime('j M Y H:i')->placeholder('–')->sortable()->visibleFrom('xl'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -72,7 +70,7 @@ class OpdResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()->label('Lihat'),
+                Tables\Actions\ViewAction::make()->label('Lihat jawaban')->iconButton()->tooltip('Lihat jawaban'),
                 Tables\Actions\ActionGroup::make([
                 Tables\Actions\Action::make('bukaKunci')->label('Buka kunci')->icon('heroicon-o-lock-open')->color('warning')
                     ->visible(fn (Opd $record) => $record->status === StatusOpd::Terkirim)

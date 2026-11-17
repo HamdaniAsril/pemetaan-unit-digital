@@ -91,13 +91,13 @@ class UnitResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['opd', 'parent'])->withExists('answer'))
             ->defaultSort(fn (Builder $query) => $query->orderBy('opd_id')->orderBy('urutan'))
             ->columns([
-                Tables\Columns\TextColumn::make('opd.nama')->label('OPD')->formatStateUsing(fn ($state) => Format::namaUnit($state))->wrap()->toggleable(),
+                Tables\Columns\TextColumn::make('opd.nama')->label('OPD')->formatStateUsing(fn ($state) => Format::namaUnit($state))->wrap()->toggleable()->visibleFrom('lg'),
                 Tables\Columns\TextColumn::make('nama_unit')->label('Unit')->searchable()->wrap()
                     ->formatStateUsing(fn ($state, Unit $record) => str_repeat('— ', $record->level).Format::namaUnit($state)),
-                Tables\Columns\TextColumn::make('kategori')->toggleable(),
+                Tables\Columns\TextColumn::make('kategori')->toggleable()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('parent.nama_unit')->label('Induk')->formatStateUsing(fn ($state) => Format::namaUnit($state))->wrap()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('dinilai')->boolean(),
-                Tables\Columns\IconColumn::make('aktif')->boolean(),
+                Tables\Columns\IconColumn::make('dinilai')->boolean()->visibleFrom('sm'),
+                Tables\Columns\IconColumn::make('aktif')->boolean()->visibleFrom('sm'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('opd_id')->label('OPD')->relationship('opd', 'nama')->searchable()->preload(),
@@ -105,8 +105,8 @@ class UnitResource extends Resource
                 Tables\Filters\TernaryFilter::make('aktif'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\EditAction::make()->iconButton()->tooltip('Ubah'),
+                Tables\Actions\DeleteAction::make()->iconButton()->tooltip('Hapus')
                     ->hidden(fn (Unit $record) => $record->answer_exists ?? $record->answer()->exists())
                     ->modalDescription('Hanya unit tanpa jawaban yang bisa dihapus. Untuk unit lain, nonaktifkan saja.'),
             ])
