@@ -1,7 +1,9 @@
 name: pemetaan
 
 x-app: &app
-  build: .
+  build:
+    context: .
+    target: produksi
   image: pemetaan-app:prod
   env_file: .env
   restart: unless-stopped
@@ -12,9 +14,10 @@ services:
   app:
     <<: *app
     container_name: pemetaan_app
-    # Hanya bisa diakses dari VPS sendiri (SSH tunnel). Tidak membuka port publik.
+    # 127.0.0.1:8090 untuk SSH tunnel; publik hanya lewat Nginx bersama (jaringan proxy).
     ports:
       - "127.0.0.1:8090:8080"
+    networks: [default, proxy]
     mem_limit: 256m
     environment:
       PEMETAAN_PERAN: web
@@ -35,3 +38,10 @@ services:
 
 volumes:
   pemetaan_storage:
+
+networks:
+  default:
+  # Jaringan milik Nginx bersama (akupeta_nginx), supaya Nginx bisa menjangkau pemetaan_app:8080.
+  proxy:
+    external: true
+    name: akupeta_akupeta_net

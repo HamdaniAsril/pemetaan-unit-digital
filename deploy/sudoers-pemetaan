@@ -1,0 +1,2 @@
+# Pengguna webhook hanya boleh memicu satu layanan deploy, tidak lebih.
+pemetaan-hook ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block pemetaan-deploy.service

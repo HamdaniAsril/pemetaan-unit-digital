@@ -1,0 +1,9 @@
+[Unit]
+Description=pemetaan - deploy dari GitHub (dipicu webhook)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/pemetaan/deploy/deploy.sh
+TimeoutStartSec=20min

@@ -1,0 +1,15 @@
+[Unit]
+Description=pemetaan - webhook deploy GitHub
+After=network-online.target
+
+[Service]
+User=pemetaan-hook
+Group=pemetaan-hook
+EnvironmentFile=/etc/pemetaan/webhook.env
+ExecStart=/usr/bin/node /srv/pemetaan/deploy/webhook.mjs
+Restart=always
+RestartSec=3
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
