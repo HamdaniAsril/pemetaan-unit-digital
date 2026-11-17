@@ -88,4 +88,4 @@ test('R-04/R-21/R-20: DESIGN.md menulis alasan ikon, tema terang, dial, dan moti
         ->toContain('Motif identitas')
         ->toContain('Alasan tema terang')
         ->toContain('Alasan ikon');
-});
+})->skip(! file_exists(dirname(__DIR__, 3).'/DESIGN.md'), 'DESIGN.md berada di luar konteks build Docker (folder aplikasi/).');
