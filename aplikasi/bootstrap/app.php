@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'opd' => \App\Http\Middleware\HanyaOpd::class,
             'admin' => \App\Http\Middleware\HanyaAdmin::class,
         ]);
+        // Di VPS aplikasi berada di belakang reverse proxy (SSH tunnel / Nginx bersama).
+        $middleware->trustProxies(at: '*');
         $middleware->redirectUsersTo(fn () => \App\Http\Controllers\Auth\LoginController::beranda());
     })
     ->withExceptions(function (Exceptions $exceptions): void {

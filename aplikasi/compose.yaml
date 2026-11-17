@@ -1,0 +1,37 @@
+name: pemetaan
+
+x-app: &app
+  build: .
+  image: pemetaan-app:prod
+  env_file: .env
+  restart: unless-stopped
+  volumes:
+    - pemetaan_storage:/var/www/html/storage
+
+services:
+  app:
+    <<: *app
+    container_name: pemetaan_app
+    # Hanya bisa diakses dari VPS sendiri (SSH tunnel). Tidak membuka port publik.
+    ports:
+      - "127.0.0.1:8090:8080"
+    mem_limit: 256m
+    environment:
+      PEMETAAN_PERAN: web
+
+  scheduler:
+    <<: *app
+    container_name: pemetaan_scheduler
+    command: ["php", "/var/www/html/artisan", "schedule:work"]
+    mem_limit: 128m
+    stop_signal: SIGTERM
+    healthcheck:
+      disable: true
+    environment:
+      PEMETAAN_PERAN: scheduler
+      AUTORUN_ENABLED: "false"
+    depends_on:
+      - app
+
+volumes:
+  pemetaan_storage:
