@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusOpd;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,5 +34,14 @@ class Opd extends Model
     public function user(): HasOne
     {
         return $this->hasOne(User::class);
+    }
+
+    /** Terkirim tetapi masih ada unit dinilai yang belum lengkap (spec bagian 6). */
+    public function scopePerluDilengkapi(Builder $query): Builder
+    {
+        return $query->where('status', StatusOpd::Terkirim)
+            ->whereHas('units', fn (Builder $u) => $u->dinilai()->where(fn (Builder $w) => $w
+                ->doesntHave('answer')
+                ->orWhereHas('answer', fn (Builder $a) => $a->whereNull('mandat')->orWhereNull('keluaran')->orWhereNull('sumber_daya'))));
     }
 }
