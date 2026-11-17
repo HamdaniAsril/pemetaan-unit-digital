@@ -12,6 +12,11 @@ class ListOpds extends ListRecords
 {
     protected static string $resource = OpdResource::class;
 
+    protected function getHeaderWidgets(): array
+    {
+        return [\App\Filament\Widgets\RingkasanStatus::class];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

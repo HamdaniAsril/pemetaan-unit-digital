@@ -46,8 +46,10 @@ class IsiController extends Controller
             'progres' => $this->penilaian->progres($opd),
             'kontak' => Setting::ambil('kontak_admin'),
             'indikator' => collect(Indikator::KODE)->map(fn ($k) => [
-                'id' => $k, 'label' => Indikator::label($k), 'pertanyaan' => Indikator::pertanyaan($k), 'ringkas' => Indikator::ringkas($k),
+                'id' => $k, 'label' => Indikator::label($k), 'pertanyaan' => Indikator::pertanyaan($k),
+                'ringkas' => Indikator::ringkas($k), 'petunjuk' => Indikator::petunjuk($k),
             ]),
+            'baruTerkirim' => session()->has('status'),
         ]);
     }
 

@@ -38,7 +38,8 @@ class OpdResource extends Resource
             ->defaultPaginationPageOption(50)
             ->columns([
                 Tables\Columns\TextColumn::make('urutan')->label('No')->sortable(),
-                Tables\Columns\TextColumn::make('nama')->label('OPD')->searchable()->wrap()
+                Tables\Columns\TextColumn::make('nama')->label('OPD')->searchable()->wrap()->grow()
+                    ->extraAttributes(['style' => 'min-width: 16rem'])
                     ->formatStateUsing(fn (string $state) => Format::namaUnit($state)),
                 Tables\Columns\TextColumn::make('user.username')->label('Username')->placeholder('Belum ada akun'),
                 Tables\Columns\TextColumn::make('status')->badge()
@@ -53,7 +54,7 @@ class OpdResource extends Resource
 
                         return "{$p['terjawab']}/{$p['total']}";
                     }),
-                Tables\Columns\TextColumn::make('jawaban_terakhir')->label('Diubah terakhir')->dateTime('j M Y H:i')->placeholder('–')->sortable(),
+                Tables\Columns\TextColumn::make('jawaban_terakhir')->label('Diubah terakhir')->dateTime('j M Y H:i')->placeholder('–')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('submitted_at')->label('Dikirim')->dateTime('j M Y H:i')->placeholder('–')->sortable(),
             ])
             ->filters([
@@ -71,7 +72,8 @@ class OpdResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()->label('Lihat jawaban'),
+                Tables\Actions\ViewAction::make()->label('Lihat'),
+                Tables\Actions\ActionGroup::make([
                 Tables\Actions\Action::make('bukaKunci')->label('Buka kunci')->icon('heroicon-o-lock-open')->color('warning')
                     ->visible(fn (Opd $record) => $record->status === StatusOpd::Terkirim)
                     ->requiresConfirmation()
@@ -99,6 +101,7 @@ class OpdResource extends Resource
                             ->body(self::infoAkun($akun['username'], $akun['password']))
                             ->persistent()->success()->send();
                     }),
+                ])->label('Aksi')->icon('heroicon-m-ellipsis-vertical')->tooltip('Aksi lain'),
             ])
             ->bulkActions([]);
     }

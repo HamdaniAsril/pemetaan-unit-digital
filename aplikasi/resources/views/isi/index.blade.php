@@ -1,70 +1,192 @@
 @extends('layouts.app')
 @section('title', 'Isi Pemetaan · '.\App\Pemetaan\Format::namaUnit($opd->nama))
 @section('content')
-<div class="wrap wide layout">
-  <nav class="side" aria-label="Daftar unit">
-    <div class="side-head">
-      <div class="bar"><i id="barFill" style="width: {{ $progres['total'] ? round($progres['terjawab'] / $progres['total'] * 100) : 0 }}%"></i></div>
-      <div class="progress-text" id="progressText">{{ $progres['terjawab'] }} dari {{ $progres['total'] }} unit sudah lengkap</div>
+@php($namaOpd = \App\Pemetaan\Format::namaUnit($opd->nama))
+<div class="shell">
+  <nav class="rel" aria-label="Daftar bagian form">
+    <div class="rel-kepala">
+      <div>
+        <div class="rel-aplikasi">Pemetaan Unit Digital</div>
+        <div class="rel-opd">{{ $namaOpd }}</div>
+      </div>
+      <button type="button" class="rel-menu" id="tombolMenu" aria-expanded="false" aria-controls="relKaki" aria-label="Menu akun">
+        <svg class="ikon"><use href="#i-menu"/></svg>
+      </button>
+      <div class="rel-progres">
+        <div class="angka"><span id="progresTeks"><b>{{ $progres['terjawab'] }}</b> dari {{ $progres['total'] }} unit lengkap</span></div>
+        <div class="batang" role="progressbar" aria-label="Progres pengisian" aria-valuemin="0" aria-valuemax="{{ $progres['total'] }}" aria-valuenow="{{ $progres['terjawab'] }}" id="progresBatang">
+          <i style="width: {{ $progres['total'] ? round($progres['terjawab'] / $progres['total'] * 100) : 0 }}%"></i>
+        </div>
+      </div>
     </div>
-    <ul class="tabs" id="tabs"></ul>
+    <ul class="rel-daftar" id="daftarTab"></ul>
+    <div class="rel-kaki" id="relKaki">
+      <a href="{{ route('akun.password') }}"><svg class="ikon"><use href="#i-kunci"/></svg> Kata sandi</a>
+      <form method="post" action="{{ route('logout') }}">@csrf<button type="submit"><svg class="ikon"><use href="#i-keluar"/></svg> Keluar</button></form>
+    </div>
   </nav>
-  <main>
-    @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
-    @error('kirim')<div class="warn" role="alert">{{ $message }}</div>@enderror
-    @if ($terkirim)
-      <div class="sent">Jawaban sudah dikirim pada {{ $opd->submitted_at?->locale('id')->translatedFormat('j F Y, H:i') }}. Hubungi admin bila perlu mengubah.</div>
-    @endif
 
-    <h2 class="tab-title" id="tabTitle"></h2>
-    <p class="tab-sub" id="tabSub"></p>
-    @if ($kontak)
-      <p class="kontak">Unit tidak sesuai? Hubungi admin: {{ $kontak }}</p>
-    @endif
+  <main class="kerja" id="kerja">
+    <div class="kerja-dalam">
+      @if (session('status') && ! $terkirim)<div class="pesan pesan-ok" role="status"><svg class="ikon"><use href="#i-cek"/></svg><span>{{ session('status') }}</span></div>@endif
+      @error('kirim')<div class="pesan pesan-galat" role="alert"><svg class="ikon"><use href="#i-awas"/></svg><span>{{ $message }}</span></div>@enderror
 
-    <div class="legend" id="legend">
-      <b>Jawab Ya atau Tidak untuk setiap unit:</b>
-      <ol>
-        @foreach ($indikator as $q)
-          <li><strong>{{ $q['label'] }}</strong>: {{ $q['pertanyaan'] }}</li>
-        @endforeach
-      </ol>
+      @if ($terkirim)
+        <div class="terkirim-pita">
+          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}" aria-hidden="true">Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></div>
+          <p><b>Jawaban sudah dikirim pada {{ $opd->submitted_at?->locale('id')->translatedFormat('j F Y, H:i') }}.</b> Terima kasih. Jawaban terkunci; hubungi admin bila ada yang perlu diubah.</p>
+        </div>
+      @endif
+
+      <div class="kerja-kepala">
+        <div>
+          <h1 id="judul" tabindex="-1"></h1>
+          <p id="subjudul"></p>
+          @if ($kontak)
+            <p class="kontak" style="margin-top:6px">Unit tidak sesuai? Hubungi admin: {{ $kontak }}</p>
+          @endif
+        </div>
+        <div class="simpan ok" id="statusSimpan" role="status" aria-live="polite">
+          <svg class="ikon"><use href="#i-awan"/></svg><span>Tersimpan otomatis</span>
+        </div>
+      </div>
+
+      <details class="petunjuk" id="petunjuk" open>
+        <summary><svg class="ikon"><use href="#i-buku"/></svg> Cara menjawab tiga pertanyaan <svg class="ikon chev"><use href="#i-bawah"/></svg></summary>
+        <div class="petunjuk-isi">
+          @foreach ($indikator as $i => $q)
+            <section class="indikator">
+              <h3><span class="no">{{ $i + 1 }}</span> {{ $q['label'] }}</h3>
+              <p class="resmi">{{ $q['pertanyaan'] }}</p>
+              <p class="ya-bila">{!! $q['petunjuk'] !!}</p>
+            </section>
+          @endforeach
+        </div>
+      </details>
+
+      <div id="isi"></div>
     </div>
-
-    <div id="content"></div>
-    <div class="nav" id="nav"></div>
-    <form id="formKirim" method="post" action="/isi/kirim" class="hidden">@csrf</form>
   </main>
 </div>
+
+<form id="formKirim" method="post" action="/isi/kirim" hidden>@csrf</form>
+<dialog class="konfirmasi" id="dialogKirim" aria-labelledby="dialogJudul">
+  <div class="isi">
+    <h2 id="dialogJudul">Kirim jawaban sekarang?</h2>
+    <p>Semua <b id="dialogJumlah"></b> unit sudah terisi. Setelah dikirim, jawaban <b>terkunci</b> dan hanya admin yang bisa membukanya kembali.</p>
+  </div>
+  <div class="aksi">
+    <button type="button" class="btn btn-garis" value="batal" id="dialogBatal">Periksa lagi</button>
+    <button type="button" class="btn btn-utama" id="dialogKirimYa"><svg class="ikon"><use href="#i-kirim"/></svg> Ya, kirim</button>
+  </div>
+</dialog>
 @endsection
 
 @push('scripts')
 <script>
 const TABS = @json($tabs);
-const Q = @json($indikator);
-let terkirim = @json($terkirim);
-let progres = @json($progres);
+const Q = @json($indikator->map(fn ($q) => ['id' => $q['id'], 'label' => $q['label']])->values());
+const TERKIRIM = @json($terkirim);
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
 const STEPS = [...TABS.map(t => ({ ...t, review: false })), { judul: "Periksa & Kirim", review: true, units: TABS.flatMap(t => t.units) }];
 const ALL = STEPS[STEPS.length - 1].units;
-const errors = {};          // unitId -> pesan
-const antrean = {};         // "unit:indikator" -> Promise (permintaan berurutan per tombol)
-const konfirmasi = {};      // "unit:indikator" -> nilai terakhir yang sudah diterima server
+const UNIT = new Map(ALL.map(u => [u.id, u]));
+const TAB_DARI_UNIT = new Map();
+TABS.forEach((t, i) => t.units.forEach(u => TAB_DARI_UNIT.set(u.id, i)));
+
+const antrean = {}, konfirmasi = {}, galat = {};
 ALL.forEach(u => Q.forEach(q => { konfirmasi[u.id + ":" + q.id] = u.jawaban[q.id]; }));
+let sibuk = 0, adaGagal = false, unitBaru = null;
 let step = Math.min(Math.max(parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1] || "1", 10) - 1, 0), STEPS.length - 1);
 
+const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const isComplete = u => Q.every(q => u.jawaban[q.id]);
-const doneCount = list => list.filter(isComplete).length;
+const ikon = (n, k = "") => `<svg class="ikon ${k}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const lengkap = u => Q.every(q => u.jawaban[q.id]);
+const jumlahLengkap = list => list.filter(lengkap).length;
+const terisi = u => Q.filter(q => u.jawaban[q.id]).length;
 
-function setAns(uid, qid, val) {
-  if (terkirim) return;
-  const unit = ALL.find(u => u.id === uid);
-  if (unit.jawaban[qid] === val) return;
-  unit.jawaban[qid] = val;
-  delete errors[uid];
-  render();
+/* ---------- Rel tab ---------- */
+function renderRel() {
+  const done = jumlahLengkap(ALL), total = ALL.length;
+  $("progresTeks").innerHTML = TERKIRIM ? "<b>Terkirim</b> · jawaban terkunci" : `<b>${done}</b> dari ${total} unit lengkap`;
+  $("progresBatang").setAttribute("aria-valuenow", done);
+  $("progresBatang").firstElementChild.style.width = (total ? done / total * 100 : 0) + "%";
+
+  const item = (s, i) => {
+    const d = jumlahLengkap(s.units), semua = d === s.units.length;
+    const butir = s.review ? "" : `<span class="tab-butir" aria-hidden="true">${s.units.map(u => `<i class="${lengkap(u) ? "isi" : ""}"></i>`).join("")}</span>`;
+    const hitung = s.review ? "" : `<span class="tab-hitung">${semua ? ikon("cek") : `${d}/${s.units.length}`}</span>`;
+    const label = s.review ? `${esc(s.judul)}` : `${esc(s.judul)}, ${d} dari ${s.units.length} unit lengkap`;
+    return `<li><button type="button" class="tab ${semua && !s.review ? "selesai" : ""}" data-step="${i}" ${i === step ? 'aria-current="step"' : ""} aria-label="${label}">
+      <span class="tab-no">${s.review ? ikon(TERKIRIM ? "gembok" : "kirim") : i + 1}</span><span class="tab-nama">${esc(s.judul)}</span>${hitung}${butir}</button></li>`;
+  };
+  const daftar = $("daftarTab");
+  daftar.innerHTML = STEPS.slice(0, -1).map(item).join("")
+    + `<li class="rel-kirim">${item(STEPS[STEPS.length - 1], STEPS.length - 1).replace(/^<li>|<\/li>$/g, "")}</li>`;
+  const aktif = daftar.querySelector('[aria-current="step"]');
+  if (aktif && daftar.scrollWidth > daftar.clientWidth) daftar.scrollLeft = aktif.offsetLeft - 16;
+}
+$("daftarTab").addEventListener("click", e => { const b = e.target.closest("[data-step]"); if (b) go(+b.dataset.step); });
+
+/* ---------- Kartu unit (baris rapor) ---------- */
+function statusUnit(u) {
+  if (lengkap(u)) return `<span class="unit-status ok">${ikon("cek")} Lengkap</span>`;
+  const n = terisi(u);
+  return `<span class="unit-status">${n ? `${n} dari 3 terjawab` : "Belum diisi"}</span>`;
+}
+function kartu(u) {
+  const kelas = ["unit", u.kedalaman > 0 ? "anak" : "", u.kedalaman > 1 ? "dalam-2" : "", lengkap(u) ? "lengkap" : "", unitBaru === u.id ? "baru" : ""].join(" ");
+  return `<article class="${kelas}" id="unit-${u.id}" aria-labelledby="nama-${u.id}">
+    <div class="unit-info">
+      <div class="unit-nama" id="nama-${u.id}">${esc(u.nama)}</div>
+      <div class="unit-meta">${u.jabatan ? `<span>${esc(u.jabatan)}</span>` : ""}<span data-status>${statusUnit(u)}</span></div>
+    </div>
+    ${Q.map(q => {
+      const n = `j-${u.id}-${q.id}`, v = u.jawaban[q.id];
+      return `<fieldset class="sel" style="border:0;margin:0;padding:0;min-width:0">
+        <legend class="sel-label">${esc(q.label)}</legend>
+        <span class="sr-only">${esc(q.label)} untuk ${esc(u.nama)}</span>
+        <div class="pilih">
+          <label class="ya"><input type="radio" name="${n}" value="ya" data-unit="${u.id}" data-q="${q.id}" ${v === "ya" ? "checked" : ""} ${TERKIRIM ? "disabled" : ""}>${ikon("cek")}Ya</label>
+          <label class="tidak"><input type="radio" name="${n}" value="tidak" data-unit="${u.id}" data-q="${q.id}" ${v === "tidak" ? "checked" : ""} ${TERKIRIM ? "disabled" : ""}>${ikon("silang")}Tidak</label>
+        </div></fieldset>`;
+    }).join("")}
+    <div class="unit-galat" data-galat ${galat[u.id] ? "" : "hidden"}>${galat[u.id] ? `<div class="galat" role="alert">${ikon("awas")}<span>${galat[u.id]}</span></div>` : ""}</div>
+  </article>`;
+}
+function perbaruiKartu(u) {
+  const el = $("unit-" + u.id);
+  if (!el) return;
+  el.classList.toggle("lengkap", lengkap(u));
+  el.classList.toggle("baru", unitBaru === u.id);
+  el.querySelector("[data-status]").innerHTML = statusUnit(u);
+  Q.forEach(q => { el.querySelectorAll(`input[data-q="${q.id}"]`).forEach(i => { i.checked = i.value === u.jawaban[q.id]; }); });
+  const g = el.querySelector("[data-galat]");
+  g.hidden = !galat[u.id];
+  g.innerHTML = galat[u.id] ? `<div class="galat" role="alert">${ikon("awas")}<span>${galat[u.id]}</span></div>` : "";
+}
+
+/* ---------- Simpan otomatis ---------- */
+function statusSimpan() {
+  const el = $("statusSimpan");
+  el.className = "simpan " + (sibuk ? "sibuk" : adaGagal ? "gagal" : "ok");
+  el.innerHTML = sibuk ? `${ikon("putar")}<span>Menyimpan…</span>`
+    : adaGagal ? `${ikon("awas")}<span>Ada jawaban yang gagal tersimpan</span>`
+    : `${ikon("awan")}<span>${TERKIRIM ? "Jawaban terkunci" : "Semua jawaban tersimpan"}</span>`;
+}
+function simpan(uid, qid, val) {
+  if (TERKIRIM) return;
+  const u = UNIT.get(uid);
+  if (u.jawaban[qid] === val) return;
+  const sebelumnyaBaru = unitBaru;
+  u.jawaban[qid] = val;
+  delete galat[uid];
+  unitBaru = uid;
+  if (sebelumnyaBaru && sebelumnyaBaru !== uid) perbaruiKartu(UNIT.get(sebelumnyaBaru));
+  perbaruiKartu(u); renderRel();
+  sibuk++; statusSimpan();
 
   const key = uid + ":" + qid;
   antrean[key] = (antrean[key] || Promise.resolve()).then(() =>
@@ -73,81 +195,114 @@ function setAns(uid, qid, val) {
       headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-TOKEN": CSRF },
       body: JSON.stringify({ unit_id: uid, indikator: qid, nilai: val }),
     }).then(async r => {
-      if (r.ok) { const d = await r.json(); progres = d.progres; konfirmasi[key] = val; return; }
-      if (unit.jawaban[qid] === val) unit.jawaban[qid] = konfirmasi[key];
-      if (r.status === 401 || r.status === 419) errors[uid] = 'Sesi berakhir, silakan <a href="/login">masuk lagi</a>.';
-      else if (r.status === 423) { errors[uid] = "Jawaban sudah dikirim dan terkunci."; terkirim = true; }
-      else errors[uid] = "Gagal menyimpan, coba lagi.";
+      if (r.ok) { konfirmasi[key] = val; return; }
+      if (u.jawaban[qid] === val) u.jawaban[qid] = konfirmasi[key];
+      galat[uid] = r.status === 401 || r.status === 419 ? 'Sesi berakhir, silakan <a href="/login">masuk lagi</a>. Jawaban terakhir belum tersimpan.'
+        : r.status === 423 ? "Jawaban sudah dikirim dan terkunci."
+        : "Gagal menyimpan. Coba klik lagi.";
     }).catch(() => {
-      if (unit.jawaban[qid] === val) unit.jawaban[qid] = konfirmasi[key];
-      errors[uid] = "Gagal menyimpan, periksa koneksi lalu coba lagi.";
-    }).finally(render)
+      if (u.jawaban[qid] === val) u.jawaban[qid] = konfirmasi[key];
+      galat[uid] = "Gagal menyimpan. Periksa koneksi internet, lalu klik lagi.";
+    }).finally(() => {
+      sibuk--;
+      adaGagal = Object.keys(galat).length > 0;
+      perbaruiKartu(u); renderRel(); statusSimpan();
+    })
   );
 }
+$("isi").addEventListener("change", e => {
+  const i = e.target;
+  if (i.matches('input[type="radio"][data-unit]')) simpan(+i.dataset.unit, i.dataset.q, i.value);
+});
 
-function unitCard(u) {
-  const child = u.kedalaman > 0;
-  return `<div class="unit ${child ? "child" : ""} ${isComplete(u) ? "complete" : ""}" style="${u.kedalaman > 1 ? "margin-left:" + (24 * u.kedalaman) + "px" : ""}">
-    <div class="unit-head">
-      <div><div class="unit-name">${esc(u.nama)}</div><div class="unit-meta">${esc(u.jabatan)}</div></div>
-      ${u.kategori ? `<span class="tag">${esc(u.kategori)}</span>` : ""}
-    </div>
-    ${Q.map((q, i) => `<div class="q">
-      <div class="q-label"><b>${i + 1}. ${esc(q.label)}</b><span>${esc(q.ringkas)}</span></div>
-      <div class="yn" role="group" aria-label="${esc(q.label)}">
-        ${["ya", "tidak"].map(v => `<button type="button" class="${v} ${u.jawaban[q.id] === v ? "on" : ""}" aria-pressed="${u.jawaban[q.id] === v}" ${terkirim ? "disabled" : ""}
-          onclick="setAns(${u.id},'${q.id}','${v}')">${v === "ya" ? "Ya" : "Tidak"}</button>`).join("")}
-      </div></div>`).join("")}
-    ${errors[u.id] ? `<div class="unit-err" role="alert">${errors[u.id]}</div>` : ""}
-  </div>`;
+/* ---------- Isi area kerja ---------- */
+function belumLengkapPertama() {
+  for (let i = 0; i < TABS.length; i++) { const u = TABS[i].units.find(x => !lengkap(x)); if (u) return { i, u }; }
+  return null;
 }
-
-function review() {
-  const sisa = ALL.length - doneCount(ALL);
-  const cell = v => v ? `<span class="${v}-t">${v === "ya" ? "Ya" : "Tidak"}</span>` : "–";
-  const rows = ALL.map(u => `<tr><td style="padding-left:${10 + u.kedalaman * 18}px">${esc(u.nama)}</td>${Q.map(q => `<td class="c">${cell(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("");
-  return (!terkirim && sisa > 0 ? `<div class="warn">Masih ada ${sisa} unit yang belum lengkap. Lengkapi dulu sebelum mengirim.</div>` : "")
-    + `<div class="table-scroll" style="margin-top:16px"><table><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
-function render() {
-  const done = doneCount(ALL), total = ALL.length;
-  document.getElementById("barFill").style.width = (total ? done / total * 100 : 0) + "%";
-  document.getElementById("progressText").textContent = terkirim ? "Sudah dikirim." : `${done} dari ${total} unit sudah lengkap · tersimpan otomatis`;
-
-  document.getElementById("tabs").innerHTML = STEPS.map((s, i) => {
-    const d = doneCount(s.units), all = d === s.units.length;
-    const c = s.review ? (terkirim ? "Terkirim" : all ? "Siap" : "") : `${d}/${s.units.length}`;
-    const subs = s.review ? "" : s.units.slice(1).map(k => `<li class="${isComplete(k) ? "ok" : ""}">${esc(k.nama)}</li>`).join("");
-    return `<li><button class="tab ${i === step ? "active" : ""} ${all ? "done" : ""}" onclick="go(${i})" ${i === step ? 'aria-current="page"' : ""}>
-      <span class="n">${i + 1}.</span><span class="t">${esc(s.judul)}</span><span class="c">${c}</span></button>
-      ${subs ? `<ul class="subs">${subs}</ul>` : ""}</li>`;
-  }).join("");
-  const tabsEl = document.getElementById("tabs"), act = tabsEl.querySelector(".tab.active");
-  if (act && tabsEl.scrollWidth > tabsEl.clientWidth) tabsEl.scrollLeft = act.offsetLeft - tabsEl.offsetLeft - 16;
-
+function renderKerja() {
   const s = STEPS[step];
-  document.getElementById("tabTitle").textContent = `${step + 1}. ${s.judul}`;
-  document.getElementById("tabSub").textContent = s.review ? "Periksa kembali semua jawaban sebelum dikirim."
-    : s.units.length > 1 ? `${s.label} beserta ${s.units.length - 1} unit di bawahnya` : s.label;
-  document.getElementById("legend").classList.toggle("hidden", s.review);
-  document.getElementById("content").innerHTML = s.review ? review()
-    : unitCard(s.units[0]) + (s.units.length > 1 ? `<div class="group-title">Unit di bawah ${esc(s.judul)}</div>` + s.units.slice(1).map(unitCard).join("") : "");
+  $("judul").textContent = s.review ? "Periksa & kirim" : s.judul;
+  $("subjudul").textContent = s.review ? "Periksa kembali semua jawaban sebelum dikirim."
+    : s.units.length > 1 ? `${s.label} · beserta ${s.units.length - 1} unit di bawahnya` : s.label;
+  $("petunjuk").hidden = s.review;
 
-  const prev = step > 0 ? `<button class="btn ghost" onclick="go(${step - 1})">← Kembali</button>` : "<span></span>";
-  let next;
-  if (step < STEPS.length - 1) next = `<button class="btn" onclick="go(${step + 1})">Lanjut: ${esc(STEPS[step + 1].judul)} →</button>`;
-  else next = terkirim ? "<span></span>" : `<button class="btn" ${done < total ? "disabled" : ""} onclick="kirim()">Kirim jawaban</button>`;
-  document.getElementById("nav").innerHTML = prev + next;
+  if (s.review) { $("isi").innerHTML = lembarRapor(); return; }
+
+  const sisa = belumLengkapPertama();
+  const berikut = STEPS[step + 1];
+  $("isi").innerHTML = `
+    <div class="kolom-kepala" aria-hidden="true"><span>Unit</span>${Q.map(q => `<span>${esc(q.label)}</span>`).join("")}</div>
+    ${s.units.map(kartu).join("")}
+    <div class="langkah">
+      ${step > 0 ? `<button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button>` : ""}
+      <div class="kanan">
+        ${!TERKIRIM && sisa && sisa.i !== step ? `<button type="button" class="btn btn-teks" data-lompat>${ikon("lompat")} Ke unit yang belum diisi</button>` : ""}
+        <button type="button" class="btn btn-utama" data-go="${step + 1}">${berikut.review ? "Periksa & kirim" : "Lanjut: " + esc(berikut.judul)} ${ikon("kanan")}</button>
+      </div>
+    </div>`;
+}
+function lembarRapor() {
+  const done = jumlahLengkap(ALL), total = ALL.length, sisa = total - done;
+  const nilai = v => v === "ya" ? `<span class="nilai-ya">Ya</span>` : v === "tidak" ? `<span class="nilai-tidak">Tidak</span>` : `<span class="nilai-kosong">Belum</span>`;
+  const baris = TABS.map((t, i) => `<tr class="kelompok"><td colspan="${Q.length + 1}">${i + 1}. ${esc(t.judul)}</td></tr>`
+    + t.units.map(u => `<tr class="${lengkap(u) ? "" : "kurang"}"><td style="padding-left:${14 + u.kedalaman * 18}px">${esc(u.nama)}${lengkap(u) || TERKIRIM ? "" : ` · <button type="button" class="btn-teks" style="border:0;background:none;padding:0;min-height:0;font-weight:700;color:var(--ya)" data-buka="${u.id}">lengkapi</button>`}</td>${Q.map(q => `<td class="c">${nilai(u.jawaban[q.id])}</td>`).join("")}</tr>`).join("")).join("");
+  return `<div class="lembar">
+    <div class="lembar-kepala">
+      <div><h2>Lembar jawaban</h2><p>${esc(@json(\App\Pemetaan\Format::namaUnit($opd->nama)))}</p></div>
+      <div class="lembar-ringkas"><div><b>${done}/${total}</b>unit lengkap</div>${sisa && !TERKIRIM ? `<div style="color:var(--tidak)"><b>${sisa}</b>belum lengkap</div>` : ""}</div>
+    </div>
+    <div class="tabel-gulir"><table class="rapor"><thead><tr><th>Unit</th>${Q.map(q => `<th class="c">${esc(q.label)}</th>`).join("")}</tr></thead><tbody>${baris}</tbody></table></div>
+    <div class="tanda">
+      ${TERKIRIM ? `<p>Jawaban sudah dikirim dan terkunci. Hubungi admin bila ada yang perlu diubah.</p><div class="stempel" aria-label="Terkirim">Terkirim</div>`
+        : sisa ? `<p>Masih ada <b>${sisa} unit</b> yang belum lengkap. Tombol kirim aktif setelah semua unit terisi.</p><button type="button" class="btn btn-utama" disabled>${ikon("kirim")} Kirim jawaban</button>`
+        : `<p>Dengan mengirim, OPD menyatakan jawaban di atas sesuai kondisi setiap unit. Setelah dikirim, jawaban terkunci.</p><button type="button" class="btn btn-utama" data-kirim>${ikon("kirim")} Kirim jawaban</button>`}
+    </div>
+  </div>
+  ${step > 0 ? `<div class="langkah"><button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button></div>` : ""}`;
+}
+$("isi").addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) return go(+g.dataset.go);
+  if (e.target.closest("[data-lompat]")) { const s = belumLengkapPertama(); if (s) bukaUnit(s.u.id); return; }
+  const b = e.target.closest("[data-buka]"); if (b) return bukaUnit(+b.dataset.buka);
+  if (e.target.closest("[data-kirim]")) { $("dialogJumlah").textContent = ALL.length; $("dialogKirim").showModal(); }
+});
+function bukaUnit(id) {
+  go(TAB_DARI_UNIT.get(id), false);
+  const el = $("unit-" + id);
+  el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  const u = UNIT.get(id), q = Q.find(q => !u.jawaban[q.id]) || Q[0];
+  el.querySelector(`input[data-q="${q.id}"]`)?.focus({ preventScroll: true });
 }
 
-function go(i) { step = i; history.replaceState(null, "", "#tab-" + (i + 1)); render(); window.scrollTo(0, 0); }
-async function kirim() {
-  if (!confirm("Kirim jawaban? Setelah dikirim, jawaban terkunci dan hanya admin yang bisa membukanya.")) return;
+/* ---------- Navigasi ---------- */
+function go(i, fokus = true) {
+  if (i < 0 || i >= STEPS.length) return;
+  step = i;
+  history.replaceState(null, "", "#tab-" + (i + 1));
+  if (unitBaru && !STEPS[i].units.some(u => u.id === unitBaru)) unitBaru = null;
+  renderRel(); renderKerja();
+  if (fokus) { window.scrollTo(0, 0); $("judul").focus({ preventScroll: true }); }
+}
+window.addEventListener("hashchange", () => { const n = parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1], 10); if (n && n - 1 !== step && n <= STEPS.length) go(n - 1); });
+
+/* ---------- Kirim ---------- */
+$("dialogBatal").addEventListener("click", () => $("dialogKirim").close());
+$("dialogKirimYa").addEventListener("click", async () => {
+  const b = $("dialogKirimYa"); b.disabled = true; b.innerHTML = `${ikon("putar")} Mengirim…`;
   await Promise.all(Object.values(antrean));
-  document.getElementById("formKirim").submit();
-}
-window.addEventListener("hashchange", () => { const n = parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1], 10); if (n && n - 1 !== step && n <= STEPS.length) { step = n - 1; render(); } });
-render();
+  $("formKirim").submit();
+});
+
+/* ---------- Petunjuk & menu ---------- */
+try { if (localStorage.getItem("petunjuk-tutup") === "1") $("petunjuk").open = false; } catch {}
+$("petunjuk").addEventListener("toggle", () => { try { localStorage.setItem("petunjuk-tutup", $("petunjuk").open ? "0" : "1"); } catch {} });
+$("tombolMenu").addEventListener("click", () => {
+  const buka = $("relKaki").classList.toggle("buka");
+  $("tombolMenu").setAttribute("aria-expanded", buka);
+});
+window.addEventListener("beforeunload", e => { if (sibuk) { e.preventDefault(); e.returnValue = ""; } });
+
+renderRel(); renderKerja(); statusSimpan();
 </script>
 @endpush

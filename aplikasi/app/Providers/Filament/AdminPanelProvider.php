@@ -28,8 +28,15 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Pemetaan Unit Digital')
             ->colors([
-                'primary' => Color::hex('#1f4e78'),
+                'primary' => Color::hex('#1d7348'),
+                'gray' => Color::Stone,
+                'danger' => Color::hex('#a3402a'),
+                'warning' => Color::hex('#b7791f'),
+                'success' => Color::hex('#1d7348'),
             ])
+            ->font('Atkinson Hyperlegible', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
+            ->darkMode(false)
+            ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.tema'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
