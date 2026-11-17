@@ -143,3 +143,21 @@ test('pengaturan menyimpan kontak admin', function () {
 
     expect(Setting::ambil('kontak_admin'))->toBe('WA 0812-1111');
 });
+
+test('induk tidak boleh turunan unit itu sendiri', function () {
+    $anak = Unit::factory()->anakDari($this->bidang)->create();
+    $this->actingAs($this->admin);
+
+    Livewire::test(EditUnit::class, ['record' => $this->bidang->id])
+        ->fillForm(['parent_id' => $anak->id])
+        ->call('save')
+        ->assertHasFormErrors(['parent_id']);
+});
+
+test('notifikasi kata sandi baru menampilkan username dan kata sandi di baris terpisah', function () {
+    $this->actingAs($this->admin);
+    Livewire::test(ListOpds::class)->callTableAction('resetPassword', $this->opd);
+
+    $body = (string) collect(session('filament.notifications'))->last()['body'];
+    expect($body)->toContain('Username: <strong>satu</strong><br>')->toContain('Kata sandi: <strong>');
+});

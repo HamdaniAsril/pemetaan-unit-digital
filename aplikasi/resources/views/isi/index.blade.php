@@ -50,6 +50,8 @@ const STEPS = [...TABS.map(t => ({ ...t, review: false })), { judul: "Periksa & 
 const ALL = STEPS[STEPS.length - 1].units;
 const errors = {};          // unitId -> pesan
 const antrean = {};         // "unit:indikator" -> Promise (permintaan berurutan per tombol)
+const konfirmasi = {};      // "unit:indikator" -> nilai terakhir yang sudah diterima server
+ALL.forEach(u => Q.forEach(q => { konfirmasi[u.id + ":" + q.id] = u.jawaban[q.id]; }));
 let step = Math.min(Math.max(parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1] || "1", 10) - 1, 0), STEPS.length - 1);
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -59,8 +61,7 @@ const doneCount = list => list.filter(isComplete).length;
 function setAns(uid, qid, val) {
   if (terkirim) return;
   const unit = ALL.find(u => u.id === uid);
-  const sebelum = unit.jawaban[qid];
-  if (sebelum === val) return;
+  if (unit.jawaban[qid] === val) return;
   unit.jawaban[qid] = val;
   delete errors[uid];
   render();
@@ -72,13 +73,13 @@ function setAns(uid, qid, val) {
       headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-TOKEN": CSRF },
       body: JSON.stringify({ unit_id: uid, indikator: qid, nilai: val }),
     }).then(async r => {
-      if (r.ok) { const d = await r.json(); progres = d.progres; return; }
-      if (unit.jawaban[qid] === val) unit.jawaban[qid] = sebelum;
+      if (r.ok) { const d = await r.json(); progres = d.progres; konfirmasi[key] = val; return; }
+      if (unit.jawaban[qid] === val) unit.jawaban[qid] = konfirmasi[key];
       if (r.status === 401 || r.status === 419) errors[uid] = 'Sesi berakhir, silakan <a href="/login">masuk lagi</a>.';
       else if (r.status === 423) { errors[uid] = "Jawaban sudah dikirim dan terkunci."; terkirim = true; }
       else errors[uid] = "Gagal menyimpan, coba lagi.";
     }).catch(() => {
-      if (unit.jawaban[qid] === val) unit.jawaban[qid] = sebelum;
+      if (unit.jawaban[qid] === val) unit.jawaban[qid] = konfirmasi[key];
       errors[uid] = "Gagal menyimpan, periksa koneksi lalu coba lagi.";
     }).finally(render)
   );

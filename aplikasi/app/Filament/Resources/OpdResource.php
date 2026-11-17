@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class OpdResource extends Resource
 {
@@ -86,7 +87,7 @@ class OpdResource extends Resource
                     ->action(function (Opd $record) {
                         $baru = app(AkunOpd::class)->resetPassword($record->user);
                         Notification::make()->title('Kata sandi baru')
-                            ->body("Username: {$record->user->username}\nKata sandi: {$baru}\n\nCatat sekarang, tidak akan ditampilkan lagi.")
+                            ->body(self::infoAkun($record->user->username, $baru))
                             ->persistent()->success()->send();
                     }),
                 Tables\Actions\Action::make('buatAkun')->label('Buat akun')->icon('heroicon-o-user-plus')
@@ -95,11 +96,17 @@ class OpdResource extends Resource
                     ->action(function (Opd $record) {
                         $akun = app(AkunOpd::class)->buatUntuk($record);
                         Notification::make()->title('Akun dibuat')
-                            ->body("Username: {$akun['username']}\nKata sandi: {$akun['password']}\n\nCatat sekarang, tidak akan ditampilkan lagi.")
+                            ->body(self::infoAkun($akun['username'], $akun['password']))
                             ->persistent()->success()->send();
                     }),
             ])
             ->bulkActions([]);
+    }
+
+    private static function infoAkun(string $username, string $password): HtmlString
+    {
+        return new HtmlString('Username: <strong>'.e($username).'</strong><br>Kata sandi: <strong>'.e($password)
+            .'</strong><br><br>Catat sekarang, tidak akan ditampilkan lagi.');
     }
 
     public static function canCreate(): bool

@@ -157,3 +157,37 @@ test('opd tanpa unit level 0 tetap aman', function () {
     expect($this->svc->tabs($opd))->toHaveCount(0)
         ->and($this->svc->progres($opd))->toBe(['terjawab' => 0, 'total' => 0]);
 });
+
+function semuaUnitTab($tabs): array
+{
+    return $tabs->flatMap->units()->pluck('id')->all();
+}
+
+test('kepala tidak dinilai: unit lain tetap tampil dan jumlahnya sama dengan progres', function () {
+    $c = opdContoh();
+    $c['kepala']->update(['dinilai' => false]);
+
+    $ids = semuaUnitTab($this->svc->tabs($c['opd']));
+    expect($ids)->toHaveCount(5)
+        ->and(count($ids))->toBe($this->svc->progres($c['opd'])['total']);
+});
+
+test('unit dengan induk melingkar tetap tampil di tab opd', function () {
+    $c = opdContoh();
+    $a = Unit::factory()->for($c['opd'])->create(['level' => 2, 'nama_unit' => 'LOOP A']);
+    $b = Unit::factory()->for($c['opd'])->create(['level' => 2, 'nama_unit' => 'LOOP B', 'parent_id' => $a->id]);
+    $a->update(['parent_id' => $b->id]);
+
+    $ids = semuaUnitTab($this->svc->tabs($c['opd']));
+    expect($ids)->toContain($a->id)->toContain($b->id)
+        ->and(count($ids))->toBe($this->svc->progres($c['opd'])['total']);
+});
+
+test('unit level 1 di bawah unit level 1 lain tidak tampil dua kali', function () {
+    $c = opdContoh();
+    $c['bidA']->update(['parent_id' => $c['sekre']->id]);
+
+    $ids = semuaUnitTab($this->svc->tabs($c['opd']));
+    expect($ids)->toHaveCount(count(array_unique($ids)))
+        ->and(count($ids))->toBe(6);
+});

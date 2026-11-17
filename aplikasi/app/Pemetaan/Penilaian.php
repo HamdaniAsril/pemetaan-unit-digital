@@ -18,39 +18,64 @@ use InvalidArgumentException;
  */
 final class Penilaian
 {
-    /** @return Collection<int, TabPenilaian> */
+    /**
+     * Setiap unit dinilai muncul tepat satu kali, sehingga jumlah unit di tab selalu sama dengan progres.total,
+     * termasuk bila admin membuat struktur yang tidak biasa (kepala tidak dinilai, induk melingkar, level tertukar).
+     *
+     * @return Collection<int, TabPenilaian>
+     */
     public function tabs(Opd $opd): Collection
     {
         $units = $this->unitDinilai($opd);
-        $kepala = $units->firstWhere('level', 0);
-        if (! $kepala) {
+        if ($units->isEmpty()) {
             return collect();
         }
 
         $anakDari = $units->groupBy(fn (Unit $u) => (int) $u->parent_id);
-        $ditempatkan = [$kepala->id => true];
-        $tabs = [];
+        $ditempatkan = [];
+        $kepala = $units->firstWhere('level', 0);
+        if ($kepala) {
+            $ditempatkan[$kepala->id] = true;
+        }
 
+        $tabs = [];
         foreach ($units->where('level', 1) as $level1) {
+            if (isset($ditempatkan[$level1->id])) {
+                continue;   // sudah tampil sebagai turunan unit level 1 lain
+            }
             $ditempatkan[$level1->id] = true;
             $anak = $this->turunan($level1, $anakDari, 1, $ditempatkan);
             $tabs[] = new TabPenilaian($level1, $anak, (string) $level1->kategori);
         }
 
-        // Unit yang induknya tidak dinilai/tidak ada masuk ke tab OPD.
-        $sisa = $units->reject(fn (Unit $u) => isset($ditempatkan[$u->id]));
+        // Unit yang belum tertampung (induk tidak dinilai/tidak ada, atau induk melingkar) masuk tab pertama.
+        $sisa = $units->reject(fn (Unit $u) => isset($ditempatkan[$u->id]))->values();
         $idSisa = $sisa->pluck('id')->flip();
-        $yatim = collect();
+        $lain = collect();
+        $tempatkan = function (Unit $u) use (&$lain, $anakDari, &$ditempatkan) {
+            $ditempatkan[$u->id] = true;
+            $u->kedalaman = 1;
+            $lain->push($u);
+            $lain = $lain->concat($this->turunan($u, $anakDari, 2, $ditempatkan));
+        };
         foreach ($sisa as $u) {
-            if (! $idSisa->has($u->parent_id) && ! isset($ditempatkan[$u->id])) {
-                $ditempatkan[$u->id] = true;
-                $u->kedalaman = 1;
-                $yatim->push($u);
-                $yatim = $yatim->concat($this->turunan($u, $anakDari, 2, $ditempatkan));
+            if (! isset($ditempatkan[$u->id]) && ! $idSisa->has($u->parent_id)) {
+                $tempatkan($u);
+            }
+        }
+        foreach ($sisa as $u) {
+            if (! isset($ditempatkan[$u->id])) {
+                $tempatkan($u);   // siklus induk
             }
         }
 
-        array_unshift($tabs, new TabPenilaian($kepala, $yatim->values(), 'OPD'));
+        if ($kepala) {
+            array_unshift($tabs, new TabPenilaian($kepala, $lain->values(), 'OPD'));
+        } elseif ($lain->isNotEmpty()) {
+            $pertama = $lain->shift();
+            $pertama->kedalaman = 0;
+            array_unshift($tabs, new TabPenilaian($pertama, $lain->values(), 'Unit lainnya'));
+        }
 
         return collect($tabs);
     }

@@ -26,7 +26,7 @@ ssh ubuntu@43.173.8.198
 cd /srv/pemetaan
 sudo cp .env.production.example .env
 sudo docker compose build
-sudo docker compose run --rm --no-deps app php artisan key:generate --show
+sudo docker compose run --rm --no-deps -e PEMETAAN_PERAN=setup app php artisan key:generate --show
 ```
 
 Salin hasil perintah terakhir (diawali `base64:`) ke baris `APP_KEY=` di `.env`, misalnya dengan `sudo nano .env`.
@@ -77,6 +77,8 @@ Memulihkan dari file backup (aplikasi berhenti sebentar):
 ```bash
 sudo docker compose stop app scheduler
 sudo docker compose cp pemetaan-backup-XXXX.sqlite app:/var/www/html/storage/database.sqlite
+# Hapus file WAL lama supaya tidak ditimpakan ke database hasil pemulihan:
+sudo docker compose run --rm --no-deps -e PEMETAAN_PERAN=setup app rm -f /var/www/html/storage/database.sqlite-wal /var/www/html/storage/database.sqlite-shm
 sudo docker compose start app scheduler
 ```
 
@@ -100,7 +102,7 @@ Migrasi database berjalan otomatis, dan data OPD tidak hilang.
    sudo docker network connect akupeta_akupeta_net pemetaan_app
    ```
    Agar sambungan ini permanen, tambahkan network eksternal tersebut di `compose.yaml`.
-3. Tambahkan file `pemetaan.conf` di `/home/akupeta/akupeta/docker/prod/nginx/conf.d/`, mengikuti pola `sopku.conf`. Pakai `proxy_pass http://pemetaan_app:8080;`, `proxy_set_header Host $host;`, dan `proxy_set_header X-Forwarded-Proto $scheme;`.
+3. Tambahkan file `pemetaan.conf` di `/home/akupeta/akupeta/docker/prod/nginx/conf.d/`, mengikuti pola `sopku.conf`. Pakai `proxy_pass http://pemetaan_app:8080;`, `proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-Proto $scheme;`, dan **`proxy_set_header X-Forwarded-For $remote_addr;`**. Baris terakhir ini wajib: kalau tidak ada, pembatasan percobaan login bisa diakali dengan memalsukan IP.
 4. Terbitkan sertifikat lewat `akupeta_certbot` (webroot `/var/www/acme`).
 5. Uji konfigurasi dulu, lalu reload:
    ```bash

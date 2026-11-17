@@ -14,7 +14,7 @@ class BuatAdminCommand extends Command
 
     public function handle(): int
     {
-        $username = $this->argument('username');
+        $username = strtolower(trim($this->argument('username')));
         if (User::query()->where('username', $username)->exists()) {
             $this->error("Username {$username} sudah dipakai.");
 

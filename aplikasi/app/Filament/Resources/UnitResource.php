@@ -41,7 +41,7 @@ class UnitResource extends Resource
             Forms\Components\Select::make('parent_id')->label('Induk')
                 ->options(fn (Get $get, ?Unit $record) => Unit::query()
                     ->where('opd_id', $get('opd_id') ?? $record?->opd_id)
-                    ->when($record, fn ($q) => $q->whereKeyNot($record->id))
+                    ->when($record, fn ($query) => $query->whereNotIn('id', self::idDiriDanTurunan($record)))
                     ->orderBy('urutan')->pluck('nama_unit', 'id'))
                 ->searchable()
                 ->rules([
@@ -53,8 +53,8 @@ class UnitResource extends Resource
                         $induk = Unit::query()->find($value);
                         if (! $induk || (int) $induk->opd_id !== (int) $opdId) {
                             $fail('Induk harus unit di OPD yang sama.');
-                        } elseif ($record && (int) $value === (int) $record->id) {
-                            $fail('Unit tidak bisa menjadi induk dirinya sendiri.');
+                        } elseif ($record && in_array((int) $value, self::idDiriDanTurunan($record), true)) {
+                            $fail('Induk tidak boleh unit itu sendiri atau unit di bawahnya.');
                         }
                     },
                 ]),
@@ -63,6 +63,26 @@ class UnitResource extends Resource
             Forms\Components\Toggle::make('dinilai')->default(true)->helperText('Matikan untuk unit yang bukan unit kerja, misalnya Staf Ahli.'),
             Forms\Components\Toggle::make('aktif')->default(true)->helperText('Unit nonaktif disembunyikan dari form dan rekap; jawabannya tetap tersimpan.'),
         ])->columns(2);
+    }
+
+    /** @return list<int> */
+    public static function idDiriDanTurunan(Unit $unit): array
+    {
+        $anakDari = Unit::query()->where('opd_id', $unit->opd_id)->get(['id', 'parent_id'])->groupBy('parent_id');
+        $hasil = [];
+        $antre = [$unit->id];
+        while ($antre) {
+            $id = array_shift($antre);
+            if (in_array($id, $hasil, true)) {
+                continue;
+            }
+            $hasil[] = $id;
+            foreach ($anakDari->get($id, collect()) as $anak) {
+                $antre[] = (int) $anak->id;
+            }
+        }
+
+        return $hasil;
     }
 
     public static function table(Table $table): Table

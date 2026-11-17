@@ -55,3 +55,37 @@ test('ganti password minimal 8 karakter', function () {
         ->post('/akun/password', ['password_lama' => 'password', 'password' => 'pendek', 'password_confirmation' => 'pendek'])
         ->assertSessionHasErrors('password');
 });
+
+test('login dibatasi per username walau IP berganti', function () {
+    foreach (range(1, 10) as $i) {
+        $this->withServerVariables(['REMOTE_ADDR' => "10.9.0.{$i}"])
+            ->post('/login', ['username' => 'bapenda', 'password' => 'salah']);
+    }
+    $this->withServerVariables(['REMOTE_ADDR' => '10.9.0.99'])
+        ->post('/login', ['username' => 'bapenda', 'password' => 'password'])
+        ->assertSessionHasErrors('username');
+    $this->assertGuest();
+});
+
+test('header X-Forwarded-For dari luar proxy tidak dipercaya', function () {
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
+        ->withHeader('X-Forwarded-For', '1.2.3.4')
+        ->get('/login');
+
+    expect(request()->ip())->toBe('203.0.113.5');
+});
+
+test('sesi kedaluwarsa (419) pada form biasa diarahkan ke login dengan pesan', function () {
+    \Illuminate\Support\Facades\Route::post('/_uji419', fn () => abort(419))->middleware('web');
+    $this->post('/_uji419')->assertRedirect('/login')->assertSessionHasErrors(['username' => 'Sesi berakhir, silakan masuk lagi.']);
+    $this->postJson('/_uji419')->assertUnauthorized()->assertJsonPath('pesan', 'Sesi berakhir, silakan masuk lagi.');
+});
+
+test('buat admin menyimpan username huruf kecil', function () {
+    $this->artisan('pemetaan:buat-admin', ['username' => 'AdminBaru'])
+        ->expectsQuestion('Kata sandi (minimal 8 karakter)', 'rahasia123')
+        ->expectsQuestion('Ulangi kata sandi', 'rahasia123')
+        ->assertSuccessful();
+
+    $this->post('/login', ['username' => 'adminbaru', 'password' => 'rahasia123'])->assertRedirect('/admin');
+});
