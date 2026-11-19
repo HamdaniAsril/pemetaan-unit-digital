@@ -89,3 +89,21 @@ test('buat admin menyimpan username huruf kecil', function () {
 
     $this->post('/login', ['username' => 'adminbaru', 'password' => 'rahasia123'])->assertRedirect('/admin');
 });
+
+test('OPD yang sebelumnya membuka /admin tetap diarahkan ke /isi, bukan ke halaman terlarang', function () {
+    $this->get('/admin')->assertRedirect('/login');   // menyimpan url.intended = /admin
+
+    $this->post('/login', ['username' => 'bapenda', 'password' => 'password'])->assertRedirect('/isi');
+});
+
+test('admin yang sebelumnya membuka /isi diarahkan ke /admin', function () {
+    $this->get('/isi')->assertRedirect('/login');
+
+    $this->post('/login', ['username' => 'admin', 'password' => 'password'])->assertRedirect('/admin');
+});
+
+test('tujuan yang boleh untuk perannya tetap dihormati', function () {
+    $this->get('/admin/opds')->assertRedirect('/login');
+
+    $this->post('/login', ['username' => 'admin', 'password' => 'password'])->assertRedirect('/admin/opds');
+});

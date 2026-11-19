@@ -49,7 +49,27 @@ class LoginController extends Controller
         RateLimiter::clear($kunciUsername);
         $request->session()->regenerate();
 
-        return redirect()->intended(self::beranda());
+        return redirect(self::tujuanSetelahMasuk($request->session()->pull('url.intended')));
+    }
+
+    /**
+     * Halaman yang dibuka sebelum login hanya dipakai bila boleh diakses peran pengguna:
+     * OPD tidak boleh ke /admin, admin tidak boleh ke /isi. Selain itu ke beranda peran.
+     */
+    private static function tujuanSetelahMasuk(?string $intended): string
+    {
+        $beranda = self::beranda();
+        $path = $intended ? '/'.ltrim((string) parse_url($intended, PHP_URL_PATH), '/') : null;
+        if (! $path || ! str_starts_with($intended, url('/'))) {
+            return $beranda;
+        }
+        $bagianAdmin = $path === '/admin' || str_starts_with($path, '/admin/');
+        $bagianOpd = $path === '/isi' || str_starts_with($path, '/isi/');
+
+        return match (true) {
+            Auth::user()?->isAdmin() => $bagianOpd ? $beranda : $intended,
+            default => $bagianAdmin ? $beranda : $intended,
+        };
     }
 
     public function destroy(Request $request): RedirectResponse
