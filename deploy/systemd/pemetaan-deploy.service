@@ -5,5 +5,7 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
+# Pengaturan per server (COMPOSE_FILE, PEMETAAN_PORT, ...). Tanda "-" = boleh tidak ada.
+EnvironmentFile=-/etc/pemetaan/deploy.env
 ExecStart=/srv/pemetaan/deploy/deploy.sh
 TimeoutStartSec=20min

@@ -7,7 +7,9 @@
 set -euo pipefail
 
 main() {
-  local repo=/srv/pemetaan branch=main before
+  # Pengaturan per server. Lewat systemd sudah dimuat (EnvironmentFile); dimuat ulang untuk jalan manual.
+  if [ -f /etc/pemetaan/deploy.env ]; then set -a; . /etc/pemetaan/deploy.env; set +a; fi
+  local repo="${PEMETAAN_DIR:-/srv/pemetaan}" branch="${DEPLOY_BRANCH:-main}" before
   cd "$repo"
 
   exec 9>/run/pemetaan-deploy.lock
@@ -17,10 +19,16 @@ main() {
   fi
 
   echo "== $(date -Is) deploy cabang $branch =="
-  before="$(git rev-parse HEAD)"
+  before="${PEMETAAN_SEBELUM:-$(git rev-parse HEAD)}"
   git fetch --prune origin "$branch"
   git reset --hard "origin/$branch"
   echo "commit: $(git log -1 --format='%h %s')"
+
+  # Bila deploy.sh sendiri ikut berubah, jalankan versi barunya (sekali) agar aturan terbaru yang dipakai.
+  if [ -z "${PEMETAAN_JALAN_ULANG:-}" ] && ! git diff --quiet "$before" HEAD -- deploy/deploy.sh; then
+    echo "deploy.sh berubah; menjalankan versi terbaru."
+    PEMETAAN_JALAN_ULANG=1 PEMETAAN_SEBELUM="$before" exec "$repo/deploy/deploy.sh"
+  fi
 
   cd aplikasi
   # Test dijalankan di tahap build "uji". Gagal di sini = berhenti, versi berjalan tidak tersentuh.

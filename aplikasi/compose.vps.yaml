@@ -1,0 +1,13 @@
+# Overlay KHUSUS VPS 43.173.8.198 (pemetaan.nekomade.com).
+# Nginx di VPS ini adalah container bersama (akupeta_nginx), jadi aplikasi ikut bergabung ke jaringannya
+# supaya Nginx bisa menjangkau pemetaan_app:8080.
+# Dipakai lewat /etc/pemetaan/deploy.env:  COMPOSE_FILE=compose.yaml:compose.vps.yaml
+services:
+  pemetaan:
+    networks: [default, proxy]
+
+networks:
+  default:
+  proxy:
+    external: true
+    name: akupeta_akupeta_net

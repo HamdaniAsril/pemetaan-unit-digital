@@ -1,4 +1,6 @@
-# Panduan Pasang dan Deploy — Pemetaan Unit Digital
+# Panduan Pasang dan Deploy (VPS) — Pemetaan Unit Digital
+
+> Untuk server lain, misalnya server Pemda, pakai **[PANDUAN-SERVER-PEMDA.md](PANDUAN-SERVER-PEMDA.md)** dan skrip `deploy/pasang.sh`.
 
 **Alamat:** https://pemetaan.nekomade.com
 **Server:** VPS `ubuntu@43.173.8.198`, dipakai bersama akupeta, bpkadpost, dan sopku
@@ -39,11 +41,12 @@ ssh ubuntu@43.173.8.198 "sudo systemctl start pemetaan-deploy"
 |---|---|
 | Kode | `/srv/pemetaan` (git, deploy key baca saja di `/etc/pemetaan/deploy_key`) |
 | Konfigurasi aplikasi | `/srv/pemetaan/aplikasi/.env` (APP_KEY, APP_URL, SESSION_SECURE_COOKIE) |
+| Pengaturan deploy | `/etc/pemetaan/deploy.env`: `COMPOSE_FILE=compose.yaml:compose.vps.yaml` (overlay VPS menyambungkan aplikasi ke jaringan Nginx bersama), `PEMETAAN_PORT=8090` |
 | Container | `pemetaan_app` (web, `127.0.0.1:8090` + jaringan Nginx bersama) dan `pemetaan_scheduler` (backup harian 02.00) |
 | Data | volume Docker `pemetaan_pemetaan_storage` (database SQLite + backup) |
 | Webhook | `pemetaan-webhook.service`, port 9010, dibuka di ufw hanya untuk jaringan Docker; rahasia di `/etc/pemetaan/webhook.env` |
 | Deploy | `pemetaan-deploy.service`. Pengguna `pemetaan-hook` hanya boleh memicu layanan ini (`/etc/sudoers.d/pemetaan`). |
-| Nginx | `/home/akupeta/akupeta/docker/prod/nginx/conf.d/pemetaan.conf` (salinan dari `deploy/nginx/pemetaan.conf`) |
+| Nginx | `/home/akupeta/akupeta/docker/prod/nginx/conf.d/pemetaan.conf` (salinan dari `deploy/nginx/pemetaan-vps.conf`) |
 | Sertifikat | Diterbitkan oleh `akupeta_certbot` dan diperpanjang otomatis oleh container itu |
 
 > ⚠️ **Nama layanan compose tidak boleh `app`.** Nginx akupeta mengirim PHP ke host `app` di jaringan yang sama. Kalau ada layanan lain bernama `app`, sebagian permintaan akupeta akan nyasar. Test `compose: tidak ada layanan bernama "app"` menjaga aturan ini.
@@ -90,5 +93,5 @@ sudo docker compose start pemetaan scheduler
 6. Nginx dan sertifikat:
    - pasang konfigurasi HTTP saja untuk acme-challenge
    - terbitkan sertifikat: `docker exec akupeta_certbot certbot certonly --webroot -w /var/www/acme -d <domain>`
-   - ganti dengan `deploy/nginx/pemetaan.conf`, lalu `nginx -t` dan reload
+   - ganti dengan `deploy/nginx/pemetaan-vps.conf`, lalu `nginx -t` dan reload
 7. Daftarkan webhook GitHub: URL `https://<domain>/hooks/github`, tipe JSON, event push, rahasia sama dengan `WEBHOOK_SECRET`.

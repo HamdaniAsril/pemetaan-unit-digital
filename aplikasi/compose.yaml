@@ -1,5 +1,10 @@
 name: pemetaan
 
+# Pengaturan DASAR, berlaku di server mana pun (server Pemda, VPS, dan seterusnya).
+# Aplikasi hanya mendengar di 127.0.0.1; Nginx di server yang meneruskan dari domain.
+# Tambahan khusus server ditaruh di berkas overlay (contoh: compose.vps.yaml) dan dipilih lewat
+# COMPOSE_FILE di /etc/pemetaan/deploy.env.
+
 x-app: &app
   build:
     context: .
@@ -11,16 +16,14 @@ x-app: &app
     - pemetaan_storage:/var/www/html/storage
 
 services:
-  # Nama layanan JANGAN "app": jaringan proxy dipakai bersama akupeta, yang Nginx-nya mengirim PHP ke host "app".
+  # Nama layanan JANGAN "app": di VPS, jaringan Nginx dipakai bersama akupeta, yang mengirim PHP ke host "app".
   # Nama layanan otomatis menjadi alias DNS di setiap jaringan, jadi "app" akan merebut lalu lintas akupeta.
   pemetaan:
     <<: *app
     container_name: pemetaan_app
-    # 127.0.0.1:8090 untuk SSH tunnel; publik hanya lewat Nginx bersama (jaringan proxy).
     ports:
-      - "127.0.0.1:8090:8080"
-    networks: [default, proxy]
-    mem_limit: 256m
+      - "127.0.0.1:${PEMETAAN_PORT:-8090}:8080"
+    mem_limit: ${PEMETAAN_MEM:-256m}
     environment:
       PEMETAAN_PERAN: web
 
@@ -40,10 +43,3 @@ services:
 
 volumes:
   pemetaan_storage:
-
-networks:
-  default:
-  # Jaringan milik Nginx bersama (akupeta_nginx), supaya Nginx bisa menjangkau pemetaan_app:8080.
-  proxy:
-    external: true
-    name: akupeta_akupeta_net

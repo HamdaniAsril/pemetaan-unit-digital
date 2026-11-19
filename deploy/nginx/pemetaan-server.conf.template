@@ -1,0 +1,45 @@
+# Situs Pemetaan Unit Digital untuk server dengan Nginx sendiri (misalnya server Pemda).
+# deploy/pasang.sh mengisi __DOMAIN__, __PORT__, dan __PORT_WEBHOOK__ lalu menyimpannya di
+# /etc/pemetaan/nginx-pemetaan.conf. Salin ke /etc/nginx/sites-available/, aktifkan, lalu:
+#   nginx -t && systemctl reload nginx
+# Sertifikat HTTPS: certbot --nginx -d __DOMAIN__  (atau sertifikat resmi instansi; sesuaikan dua baris ssl_*).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name __DOMAIN__;
+
+    ssl_certificate /etc/letsencrypt/live/__DOMAIN__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__DOMAIN__/privkey.pem;
+
+    client_max_body_size 10m;
+
+    # Webhook GitHub untuk deploy otomatis (hanya menerima permintaan bertanda tangan HMAC).
+    location = /hooks/github {
+        client_max_body_size 5m;
+        proxy_pass http://127.0.0.1:__PORT_WEBHOOK__;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:__PORT__;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_read_timeout 120s;
+    }
+}
