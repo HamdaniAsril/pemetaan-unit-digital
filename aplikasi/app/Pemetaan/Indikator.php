@@ -44,7 +44,7 @@ final class Indikator
         return self::ambil($kode)['ringkas'];
     }
 
-    /** Teks petunjuk bawaan (draf). Teks yang tampil ke OPD diambil dari petunjukAktif(). */
+    /** Teks petunjuk bawaan. Teks yang tampil ke OPD diambil dari petunjukAktif(). */
     public static function petunjuk(string $kode): string
     {
         return self::ambil($kode)['petunjuk'];
@@ -54,12 +54,6 @@ final class Indikator
     public static function petunjukAktif(string $kode): string
     {
         return \App\Models\Setting::ambil('petunjuk_'.$kode) ?? self::petunjuk($kode);
-    }
-
-    /** Draf petunjuk ditulis agen; label "contoh" tampil sampai admin menyimpannya di Pengaturan (R-38). */
-    public static function petunjukDikonfirmasi(): bool
-    {
-        return \App\Models\Setting::ambil('petunjuk_dikonfirmasi') === '1';
     }
 
     public static function valid(string $kode): bool

@@ -37,9 +37,7 @@ class Pengaturan extends Page implements HasForms
             Forms\Components\TextInput::make('kontak_admin')->label('Kontak admin')->maxLength(200)
                 ->helperText('Tampil di form OPD: "Unit tidak sesuai? Hubungi admin: …". Kosongkan untuk menyembunyikan.'),
             Forms\Components\Section::make('Petunjuk menjawab')
-                ->description(Indikator::petunjukDikonfirmasi()
-                    ? 'Teks ini tampil di form OPD di bawah setiap pertanyaan.'
-                    : 'Teks di bawah masih draf dan tampil ke OPD dengan label "contoh". Periksa, ubah bila perlu, lalu simpan untuk mengonfirmasi.')
+                ->description('Teks ini tampil di form OPD di bawah setiap pertanyaan.')
                 ->schema(collect(Indikator::KODE)->map(fn ($k) => Forms\Components\Textarea::make('petunjuk_'.$k)
                     ->label(Indikator::label($k))->helperText(Indikator::pertanyaan($k))
                     ->rows(3)->required()->maxLength(600))->all()),
@@ -53,7 +51,6 @@ class Pengaturan extends Page implements HasForms
         foreach (Indikator::KODE as $k) {
             Setting::simpan('petunjuk_'.$k, trim($data['petunjuk_'.$k]));
         }
-        Setting::simpan('petunjuk_dikonfirmasi', '1');
         Notification::make()->title('Pengaturan disimpan')->success()->send();
     }
 }

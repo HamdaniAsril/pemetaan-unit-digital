@@ -114,12 +114,12 @@ test('opd tanpa unit dinilai melihat keadaan kosong dan tidak bisa mengirim', fu
     expect($this->opd->fresh()->status)->not->toBe(StatusOpd::Terkirim);
 });
 
-test('petunjuk berlabel contoh sampai dikonfirmasi admin', function () {
-    $this->actingAs($this->user)->get('/isi')->assertSee('Contoh penjelasan, belum dikonfirmasi admin');
+test('petunjuk tampil tanpa label draf dan memakai teks yang diubah admin', function () {
+    $this->actingAs($this->user)->get('/isi')
+        ->assertSee(\App\Pemetaan\Indikator::petunjuk('mandat'))
+        ->assertDontSee('belum dikonfirmasi');
 
     Setting::simpan('petunjuk_mandat', 'Jawab Ya bila ada SK resmi.');
-    Setting::simpan('petunjuk_dikonfirmasi', '1');
 
-    $this->get('/isi')->assertSee('Jawab Ya bila ada SK resmi.')
-        ->assertDontSee('Contoh penjelasan, belum dikonfirmasi admin');
+    $this->get('/isi')->assertSee('Jawab Ya bila ada SK resmi.');
 });

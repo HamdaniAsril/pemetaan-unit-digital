@@ -49,7 +49,6 @@ class IsiController extends Controller
                 'id' => $k, 'label' => Indikator::label($k), 'pertanyaan' => Indikator::pertanyaan($k),
                 'ringkas' => Indikator::ringkas($k), 'petunjuk' => Indikator::petunjukAktif($k),
             ]),
-            'petunjukDikonfirmasi' => Indikator::petunjukDikonfirmasi(),
             'baruTerkirim' => session()->has('status'),
         ]);
     }

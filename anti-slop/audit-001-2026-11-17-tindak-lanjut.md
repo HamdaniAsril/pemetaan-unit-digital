@@ -39,3 +39,7 @@ Diperbaiki sesuai permintaan pemilik: **nomor 1 sampai 5** (semua temuan priorit
 Sesi browser dikembalikan ke akun `dishub`.
 
 **Semua 13 temuan audit #001 sudah ditangani.**
+
+---
+
+**Keputusan pemilik (19 November 2026), temuan 5 (R-38):** label "Contoh penjelasan, belum dikonfirmasi admin" dihapus atas permintaan pemilik. Teks petunjuk dipakai apa adanya dan tetap bisa diubah admin di Pengaturan → Petunjuk menjawab.

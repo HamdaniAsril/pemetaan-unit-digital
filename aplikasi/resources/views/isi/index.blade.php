@@ -66,9 +66,6 @@
             </section>
           @endforeach
         </div>
-        @unless ($petunjukDikonfirmasi)
-          <span class="petunjuk-label">Contoh penjelasan, belum dikonfirmasi admin</span>
-        @endunless
       </details>
 
       <div id="isi"></div>

@@ -169,7 +169,6 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .kosong { background: var(--permukaan); border: 1px dashed var(--garis-kuat); border-radius: var(--radius); padding: 40px 24px; text-align: center; color: var(--tinta-2); }
 .kosong h2 { font: 800 var(--judul)/1.2 var(--sans); color: var(--tinta); margin: 0 0 8px; }
 .kosong p { margin: 0 auto; max-width: 48ch; }
-.petunjuk-label { display: inline-block; margin: 0 18px 14px; padding: 4px 10px; border-radius: 8px; background: var(--latar); color: var(--tinta-2); font-size: var(--teks-kecil); font-weight: 600; }
 .langkah { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
 .langkah .kanan { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
 

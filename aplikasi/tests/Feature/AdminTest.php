@@ -162,7 +162,7 @@ test('notifikasi kata sandi baru menampilkan username dan kata sandi di baris te
     expect($body)->toContain('Username: <strong>satu</strong><br>')->toContain('Kata sandi: <strong>');
 });
 
-test('pengaturan menyimpan petunjuk indikator dan menandainya dikonfirmasi', function () {
+test('pengaturan menyimpan petunjuk indikator', function () {
     $this->actingAs($this->admin);
     Livewire::test(Pengaturan::class)
         ->assertFormSet(['petunjuk_mandat' => \App\Pemetaan\Indikator::petunjuk('mandat')])
@@ -170,6 +170,5 @@ test('pengaturan menyimpan petunjuk indikator dan menandainya dikonfirmasi', fun
         ->call('simpan')
         ->assertHasNoFormErrors();
 
-    expect(Setting::ambil('petunjuk_keluaran'))->toBe('Jawab Ya bila unit mengelola aplikasi.')
-        ->and(Setting::ambil('petunjuk_dikonfirmasi'))->toBe('1');
+    expect(Setting::ambil('petunjuk_keluaran'))->toBe('Jawab Ya bila unit mengelola aplikasi.');
 });
