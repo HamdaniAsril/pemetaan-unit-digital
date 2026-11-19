@@ -74,7 +74,12 @@ else gagal "port $PORT_WEBHOOK sudah dipakai program lain (pilih lain dengan --p
 
 # Akses keluar ke GitHub: port 22 biasa, atau 443 (ssh.github.com) bila 22 diblokir jaringan.
 SSH_HOST_GITHUB=""
-uji_github() { timeout 15 ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$@" 2>&1 | grep -qiE "permission denied|successfully authenticated"; }
+# GitHub selalu menolak shell (kode keluar bukan 0), jadi yang dinilai adalah isi jawabannya, bukan kode keluarnya.
+uji_github() {
+  local jawab
+  jawab="$(timeout 15 ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$@" 2>&1 || true)"
+  grep -qiE "permission denied|successfully authenticated" <<<"$jawab"
+}
 if uji_github git@github.com; then
   SSH_HOST_GITHUB=github.com; ok "GitHub terjangkau lewat SSH port 22"
 elif uji_github -p 443 git@ssh.github.com; then
