@@ -51,8 +51,10 @@ KURANG=0
 if [ -z "$PHP_BIN" ]; then PHP_BIN="$(command -v php8.4 || command -v php || true)"; fi
 if [ -n "$PHP_BIN" ] && "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);'; then
   ok "PHP $("$PHP_BIN" -r 'echo PHP_VERSION;') ($PHP_BIN)"
+  # Daftar modul ditampung dulu: `php -m | grep -q` bisa gagal palsu (SIGPIPE + pipefail).
+  MODUL="$("$PHP_BIN" -m)"
   for ext in pdo_sqlite sqlite3 intl gd zip mbstring dom xml fileinfo tokenizer ctype openssl curl; do
-    if "$PHP_BIN" -m | grep -qix "$ext"; then ok "ekstensi $ext"; else gagal "ekstensi PHP $ext belum aktif"; KURANG=1; fi
+    if grep -qix "$ext" <<<"$MODUL"; then ok "ekstensi $ext"; else gagal "ekstensi PHP $ext belum aktif"; KURANG=1; fi
   done
   if "$PHP_BIN" -r 'exit(function_exists("proc_open") ? 0 : 1);'; then ok "proc_open aktif (dibutuhkan composer)"; else gagal "proc_open dinonaktifkan di PHP CLI"; KURANG=1; fi
 else

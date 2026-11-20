@@ -1,4 +1,6 @@
-# Panduan Pemasangan di Server Pemda — Pemetaan Unit Digital
+# Panduan Pemasangan di Server Docker (root) — Pemetaan Unit Digital
+
+> **Server Pemda memakai CloudPanel: pakai [PANDUAN-CLOUDPANEL.md](PANDUAN-CLOUDPANEL.md).** Panduan ini untuk server lain yang memakai Docker dengan akses root.
 
 Untuk: **tim IT Pemda** yang memasang aplikasi di server instansi.
 Hasil akhir: aplikasi berjalan di domain Pemda (misalnya `https://pemetaan.contoh.go.id`). Setiap pembaruan kode di GitHub **terpasang otomatis** di server dalam ±2 menit, setelah seluruh test lulus.

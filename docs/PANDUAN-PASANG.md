@@ -1,6 +1,6 @@
 # Panduan Pasang dan Deploy (VPS) — Pemetaan Unit Digital
 
-> Untuk server lain, misalnya server Pemda, pakai **[PANDUAN-SERVER-PEMDA.md](PANDUAN-SERVER-PEMDA.md)** dan skrip `deploy/pasang.sh`.
+> Server Pemda (CloudPanel): **[PANDUAN-CLOUDPANEL.md](PANDUAN-CLOUDPANEL.md)**. Server lain dengan Docker dan root: **[PANDUAN-SERVER-DOCKER.md](PANDUAN-SERVER-DOCKER.md)**.
 
 **Alamat:** https://pemetaan.nekomade.com
 **Server:** VPS `ubuntu@43.173.8.198`, dipakai bersama akupeta, bpkadpost, dan sopku

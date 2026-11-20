@@ -64,9 +64,11 @@ if [ -n "$NODE" ] && [ "$("$NODE" -p 'process.versions.node.split(".")[0]')" -ge
 else
   gagal "Node.js 18 atau lebih baru belum terpasang (dipakai layanan webhook)"; KURANG=1
 fi
-port_dipakai() { ss -ltnH "( sport = :$1 )" 2>/dev/null | grep -q .; }
+# Keluaran ditampung dulu: `perintah | grep -q` bisa gagal palsu (SIGPIPE + pipefail).
+port_dipakai() { local o; o="$(ss -ltnH "( sport = :$1 )" 2>/dev/null || true)"; [ -n "$o" ]; }
+CONTAINER="$(docker ps --format '{{.Names}}' 2>/dev/null || true)"
 if ! port_dipakai "$PORT"; then ok "port $PORT bebas"
-elif docker ps --format '{{.Names}}' 2>/dev/null | grep -qx pemetaan_app; then ok "port $PORT dipakai pemetaan_app (sudah terpasang)"
+elif grep -qx pemetaan_app <<<"$CONTAINER"; then ok "port $PORT dipakai pemetaan_app (sudah terpasang)"
 else gagal "port $PORT sudah dipakai program lain (pilih lain dengan --port)"; KURANG=1; fi
 if ! port_dipakai "$PORT_WEBHOOK"; then ok "port $PORT_WEBHOOK bebas"
 elif systemctl is-active --quiet pemetaan-webhook 2>/dev/null; then ok "port $PORT_WEBHOOK dipakai pemetaan-webhook (sudah terpasang)"
