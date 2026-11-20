@@ -56,6 +56,8 @@ Kali ini skrip akan:
 
 Skrip ini aman dijalankan berulang. Yang sudah ada tidak ditimpa.
 
+> **Data awal:** server Pemda memulai dengan **database baru** (keputusan pemilik, 20 November 2026). Struktur 49 OPD dan 603 unit sudah terisi, sedangkan akun, jawaban, dan pengaturan masih kosong. Data dari server lain **tidak** dipindahkan, jadi bagian 6 tidak perlu dijalankan.
+
 ### Langkah 4: Nginx dan HTTPS
 Skrip menyiapkan konfigurasi siap pakai di `/etc/pemetaan/nginx-pemetaan.conf`:
 ```bash
@@ -77,6 +79,10 @@ Kirim **URL** `https://pemetaan.contoh.go.id/hooks/github` dan **rahasia** di at
 cd /srv/pemetaan/aplikasi && sudo docker compose exec pemetaan php artisan pemetaan:buat-admin admin
 ```
 Kata sandinya ditanyakan dua kali. Setelah itu, admin bisa masuk di `https://pemetaan.contoh.go.id/login`.
+
+### Langkah 7: siapkan akun OPD (oleh admin, di panel)
+1. Buka **Pengaturan**: isi kontak admin, lalu periksa dan simpan teks petunjuk menjawab.
+2. Buka menu **OPD**, lalu klik **Buat semua akun**. Excel berisi username dan kata sandi awal ke-49 OPD akan terunduh, dan hanya bisa diunduh sekali. **Excel inilah yang dibagikan ke OPD.** Akun dari server lain tidak berlaku di sini.
 
 ## 3. Yang dikerjakan pemilik repo
 
@@ -114,7 +120,7 @@ Kalau ada test yang gagal saat deploy, deploy **berhenti**, dan versi yang sedan
 | Rahasia webhook | `/etc/pemetaan/webhook.env` |
 | Deploy key | `/etc/pemetaan/deploy_key` |
 
-## 6. Pindah data dari server lama (bila sebelumnya sudah dipakai)
+## 6. Pindah data dari server lama (hanya bila suatu saat diperlukan)
 
 Lakukan saat tidak ada OPD yang sedang mengisi.
 
