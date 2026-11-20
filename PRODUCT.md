@@ -33,6 +33,7 @@ Kegiatan ini dianggap berhasil kalau semua OPD mengirim penilaian lengkap dan ad
 - **Teknologi:** Laravel 12, form OPD dibuat dengan Blade dan JavaScript tanpa framework, panel admin dengan Filament 3, database SQLite. Dipasang di VPS bersama situs lain.
 - **Teks pertanyaan resmi** (bagian 1 spec `docs/superpowers/specs/2026-11-17-form-pemetaan-unit-digital-design.md`) ditampilkan persis apa adanya. Penjelasan tambahan boleh ditulis, tetapi tidak menggantikan teks resmi.
 - **Jawaban** hanya Ya atau Tidak. Tidak ada kolom keterangan dan tidak ada lampiran.
+- **Akun OPD** memakai daftar resmi Pemda (`bahan/USER PENDATAAN.xlsx`, tidak masuk git). Username berbentuk email `…@sipresisi.rohilkab.go.id` (Damkar `@sipresisi.go.id`), diimpor lewat panel admin. Semua akun memakai kata sandi yang sama dan tidak wajib diganti. Ini keputusan pemilik pada 20 November 2026, setelah diberi tahu risikonya: OPD yang tahu pola username bisa masuk sebagai OPD lain.
 - **Nama unit** berasal dari data SIASN, bisa sangat panjang (lebih dari 150 karakter), dan ditulis huruf kapital semua sehingga perlu diformat.
 
 ## Brand Commitments

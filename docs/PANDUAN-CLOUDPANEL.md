@@ -89,7 +89,9 @@ php8.4 ~/htdocs/pemetaan.contoh.go.id/aplikasi/artisan pemetaan:buat-admin admin
 ```
 Kata sandinya ditanyakan dua kali. Setelah itu, admin masuk di `https://pemetaan.contoh.go.id/login`, lalu:
 1. Buka **Pengaturan**: isi kontak admin, lalu periksa dan simpan teks petunjuk menjawab.
-2. Buka menu **OPD**, lalu klik **Buat semua akun**. Excel berisi username dan kata sandi awal ke-49 OPD akan terunduh, dan hanya bisa diunduh sekali. **Excel inilah yang dibagikan ke OPD.**
+2. Buka menu **OPD**, lalu klik **Impor akun dari Excel**, dan unggah berkas **USER PENDATAAN.xlsx** (kolom OPD, Username, Password) dari Pemda. Ke-49 akun OPD langsung memakai username dan kata sandi dari berkas itu. Berkasnya tidak disimpan di server.
+   - Ringkasan hasil impor tampil di layar: berapa akun dibuat, diperbarui, dan dilewati beserta alasannya.
+   - Tombol **Buat semua akun** (username dan kata sandi acak) hanya dipakai kalau tidak ada berkas akun dari Pemda.
 
 ## 7. Yang dikerjakan pemilik repo
 

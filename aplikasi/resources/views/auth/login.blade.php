@@ -20,7 +20,7 @@
 
       <div class="field">
         <label for="username">Username</label>
-        <input id="username" name="username" value="{{ old('username') }}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus placeholder="contoh: dinsos">
+        <input id="username" name="username" value="{{ old('username') }}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus placeholder="contoh: dinsos_rohil@sipresisi.rohilkab.go.id">
       </div>
       <div class="field">
         <label for="password">Kata sandi</label>
