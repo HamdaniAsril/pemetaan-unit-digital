@@ -22,7 +22,7 @@ Ada dua pihak di panduan ini:
 | Nginx | Sebagai pintu masuk dari domain ke aplikasi. |
 | Domain atau subdomain | Mengarah ke IP publik server, misalnya `pemetaan.contoh.go.id`. |
 | Sertifikat HTTPS | Let's Encrypt (`certbot`) atau sertifikat resmi instansi. |
-| Akses keluar ke `github.com` | SSH port 22. Kalau diblokir, port 443 (`ssh.github.com`) juga bisa. Skrip memeriksa keduanya. |
+| Akses keluar ke `github.com` | HTTPS (port 443) sudah cukup. Repo-nya publik, jadi kode diambil tanpa kunci. |
 | Akses masuk port 443 dari internet | Supaya GitHub bisa mengirim pemberitahuan pembaruan (webhook). |
 
 Aplikasi dan webhook **hanya mendengar di `127.0.0.1`** (bawaan port 8090 dan 9010). Tidak ada port baru yang perlu dibuka di firewall selain 80/443 untuk Nginx.
@@ -41,26 +41,17 @@ Semua baris harus bertanda ✔. Kalau port 8090 atau 9010 sudah dipakai program 
 ```bash
 sudo bash pasang.sh --domain pemetaan.contoh.go.id
 ```
-Saat pertama kali dijalankan, skrip **berhenti** dan menampilkan sebuah **kunci publik** (diawali `ssh-ed25519 …`).
-
-➡️ **Kirim kunci publik itu ke pemilik repo.** Kunci ini aman dibagikan dan hanya memberi akses **baca** ke kode.
-
-### Langkah 3: setelah pemilik repo mengabari kunci sudah didaftarkan
-Jalankan perintah yang sama sekali lagi:
-```bash
-sudo bash pasang.sh --domain pemetaan.contoh.go.id
-```
-Kali ini skrip akan:
-- mengambil kode ke `/srv/pemetaan`
+Skrip akan:
+- mengambil kode lewat HTTPS ke `/srv/pemetaan`, tanpa kunci karena repo-nya publik
 - membuat pengaturan dan rahasia
 - memasang layanan `pemetaan-webhook` dan `pemetaan-deploy`
 - menjalankan **deploy pertama**, yaitu build dan seluruh test. Ini butuh beberapa menit. Database dibuat dan data 49 OPD diimpor otomatis.
 
 Skrip ini aman dijalankan berulang. Yang sudah ada tidak ditimpa.
 
-> **Data awal:** server Pemda memulai dengan **database baru** (keputusan pemilik, 20 November 2026). Struktur 49 OPD dan 603 unit sudah terisi, sedangkan akun, jawaban, dan pengaturan masih kosong. Data dari server lain **tidak** dipindahkan, jadi bagian 6 tidak perlu dijalankan.
+> **Hanya bila repo suatu saat dijadikan privat:** skrip beralih ke SSH dan berhenti sambil menampilkan kunci publik. Kirim kunci itu ke pemilik repo, lalu jalankan ulang perintah yang sama.
 
-### Langkah 4: Nginx dan HTTPS
+### Langkah 3: Nginx dan HTTPS
 Skrip menyiapkan konfigurasi siap pakai di `/etc/pemetaan/nginx-pemetaan.conf`:
 ```bash
 sudo cp /etc/pemetaan/nginx-pemetaan.conf /etc/nginx/sites-available/pemetaan
@@ -70,26 +61,26 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 Kalau memakai sertifikat instansi, sesuaikan dua baris `ssl_certificate` di berkas itu.
 
-### Langkah 5: kirim data webhook ke pemilik repo (lewat jalur PRIBADI)
+### Langkah 4: kirim data webhook ke pemilik repo (lewat jalur PRIBADI)
 ```bash
 sudo grep WEBHOOK_SECRET /etc/pemetaan/webhook.env
 ```
 Kirim **URL** `https://pemetaan.contoh.go.id/hooks/github` dan **rahasia** di atas ke pemilik repo, misalnya lewat pesan pribadi. Rahasia ini **jangan** dikirim ke grup atau ditulis di dokumen bersama.
 
-### Langkah 6: buat akun admin
+### Langkah 5: buat akun admin
 ```bash
 cd /srv/pemetaan/aplikasi && sudo docker compose exec pemetaan php artisan pemetaan:buat-admin admin
 ```
 Kata sandinya ditanyakan dua kali. Setelah itu, admin bisa masuk di `https://pemetaan.contoh.go.id/login`.
 
-### Langkah 7: siapkan akun OPD (oleh admin, di panel)
+### Langkah 6: siapkan akun OPD (oleh admin, di panel)
 1. Buka **Pengaturan**: isi kontak admin, lalu periksa dan simpan teks petunjuk menjawab.
 2. Buka menu **OPD**, lalu klik **Buat semua akun**. Excel berisi username dan kata sandi awal ke-49 OPD akan terunduh, dan hanya bisa diunduh sekali. **Excel inilah yang dibagikan ke OPD.** Akun dari server lain tidak berlaku di sini.
 
 ## 3. Yang dikerjakan pemilik repo
 
-1. **Mendaftarkan kunci publik** dari Langkah 2: GitHub → repo → Settings → Deploy keys → Add deploy key. Biarkan centang "Allow write access" **kosong**.
-2. **Mendaftarkan webhook** dari Langkah 5: Settings → Webhooks → Add webhook.
+1. *(Hanya bila repo privat)* **mendaftarkan kunci publik** dari tim Pemda: Settings → Deploy keys → Add deploy key, dengan akses tulis tidak dicentang.
+2. **Mendaftarkan webhook** dari Langkah 4: Settings → Webhooks → Add webhook.
    - Payload URL: `https://<domain>/hooks/github`
    - Content type: `application/json`
    - Secret: rahasia dari tim Pemda
@@ -141,8 +132,8 @@ sudo docker compose start pemetaan scheduler
 
 | Gejala | Penyebab umum | Langkah |
 |---|---|---|
-| Skrip berhenti di "GitHub tidak terjangkau" | Jaringan memblokir SSH keluar | Buka akses keluar ke `github.com:22` atau `ssh.github.com:443` |
-| Skrip berhenti menampilkan kunci publik | Kunci belum didaftarkan di repo | Kirim kunci ke pemilik repo, tunggu, lalu jalankan ulang |
+| Skrip berhenti di "GitHub tidak terjangkau" | Jaringan memblokir HTTPS keluar ke GitHub | Buka akses keluar ke `github.com:443` |
+| Skrip berhenti menampilkan kunci publik | Repo sedang privat, dan kunci belum didaftarkan | Kirim kunci ke pemilik repo, tunggu, lalu jalankan ulang |
 | Webhook di GitHub tidak 200 | Nginx belum meneruskan `/hooks/github`, atau rahasia beda | `journalctl -u pemetaan-webhook -n 30`; cocokkan rahasia di GitHub dengan `webhook.env` |
 | Push tidak ter-deploy | Test gagal | `journalctl -u pemetaan-deploy -n 80`; cari baris `FAILED` |
 | Halaman 502 | Container belum siap atau berhenti | `cd /srv/pemetaan/aplikasi && sudo docker compose ps` dan `docker compose logs pemetaan` |

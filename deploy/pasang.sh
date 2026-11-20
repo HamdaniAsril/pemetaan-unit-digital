@@ -8,7 +8,8 @@
 #
 # Pilihan:
 #   --domain NAMA        domain aplikasi (wajib, kecuali --cek)
-#   --repo URL           repo git (bawaan: git@github.com:HamdaniAsril/pemetaan-unit-digital.git)
+#   --repo URL           repo git (bawaan: https://github.com/HamdaniAsril/pemetaan-unit-digital.git)
+#                        Repo publik dibaca lewat HTTPS tanpa kunci; bila tidak bisa, SSH + deploy key.
 #   --dir PATH           folder kode (bawaan: /srv/pemetaan)
 #   --cabang NAMA        cabang yang di-deploy (bawaan: main)
 #   --port N             port aplikasi di 127.0.0.1 (bawaan: 8090)
@@ -16,7 +17,7 @@
 #   --cek                hanya periksa prasyarat
 set -euo pipefail
 
-REPO="git@github.com:HamdaniAsril/pemetaan-unit-digital.git"
+REPO="https://github.com/HamdaniAsril/pemetaan-unit-digital.git"
 DIR=/srv/pemetaan
 CABANG=main
 PORT=8090
@@ -50,7 +51,7 @@ henti() { printf '\n\033[31mBERHENTI:\033[0m %s\n' "$*"; exit 1; }
 # ---------------------------------------------------------------- prasyarat
 info "Memeriksa prasyarat"
 KURANG=0
-for c in git openssl curl systemctl flock visudo ssh-keygen ssh ss sed; do
+for c in git openssl curl systemctl flock visudo ss sed; do
   if command -v "$c" >/dev/null 2>&1; then ok "$c"; else gagal "$c tidak ada"; KURANG=1; fi
 done
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
@@ -74,62 +75,79 @@ if ! port_dipakai "$PORT_WEBHOOK"; then ok "port $PORT_WEBHOOK bebas"
 elif systemctl is-active --quiet pemetaan-webhook 2>/dev/null; then ok "port $PORT_WEBHOOK dipakai pemetaan-webhook (sudah terpasang)"
 else gagal "port $PORT_WEBHOOK sudah dipakai program lain (pilih lain dengan --port-webhook)"; KURANG=1; fi
 
-# Akses keluar ke GitHub: port 22 biasa, atau 443 (ssh.github.com) bila 22 diblokir jaringan.
-SSH_HOST_GITHUB=""
-# GitHub selalu menolak shell (kode keluar bukan 0), jadi yang dinilai adalah isi jawabannya, bukan kode keluarnya.
-uji_github() {
-  local jawab
-  jawab="$(timeout 15 ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$@" 2>&1 || true)"
-  grep -qiE "permission denied|successfully authenticated" <<<"$jawab"
-}
-if uji_github git@github.com; then
-  SSH_HOST_GITHUB=github.com; ok "GitHub terjangkau lewat SSH port 22"
-elif uji_github -p 443 git@ssh.github.com; then
-  SSH_HOST_GITHUB=ssh.github.com; ok "GitHub terjangkau lewat SSH port 443 (port 22 diblokir)"
+# Akses repo: HTTPS dulu (repo publik, tanpa kunci). Bila gagal, SSH + deploy key (port 22 atau 443).
+ke_https() { case "$1" in git@github.com:*) printf 'https://github.com/%s' "${1#git@github.com:}" ;; *) printf '%s' "$1" ;; esac; }
+ke_ssh()   { case "$1" in https://github.com/*) printf 'git@github.com:%s' "${1#https://github.com/}" ;; *) printf '%s' "$1" ;; esac; }
+CARA_AKSES=""
+REPO_HTTPS="$(ke_https "$REPO")"
+if command -v git >/dev/null 2>&1 && GIT_TERMINAL_PROMPT=0 timeout 30 git ls-remote --heads "$REPO_HTTPS" "$CABANG" >/dev/null 2>&1; then
+  CARA_AKSES=https; REPO="$REPO_HTTPS"
+  ok "repo terbaca lewat HTTPS tanpa kunci ($REPO)"
 else
-  gagal "GitHub tidak terjangkau lewat SSH (port 22 maupun 443). Minta jaringan membuka akses keluar ke github.com"; KURANG=1
+  echo "  … repo tidak terbaca lewat HTTPS (repo privat, atau HTTPS keluar diblokir); mencoba SSH + deploy key"
+  REPO="$(ke_ssh "$REPO")"
+  for c in ssh ssh-keygen; do
+    if command -v "$c" >/dev/null 2>&1; then ok "$c"; else gagal "$c tidak ada"; KURANG=1; fi
+  done
+  # GitHub selalu menolak shell (kode keluar bukan 0), jadi yang dinilai adalah isi jawabannya, bukan kode keluarnya.
+  uji_github() {
+    local jawab
+    jawab="$(timeout 15 ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$@" 2>&1 || true)"
+    grep -qiE "permission denied|successfully authenticated" <<<"$jawab"
+  }
+  if uji_github git@github.com; then
+    CARA_AKSES=ssh; ok "GitHub terjangkau lewat SSH port 22"
+  elif uji_github -p 443 git@ssh.github.com; then
+    CARA_AKSES=ssh; REPO="$(printf '%s' "$REPO" | sed -E 's#^git@github\.com:#ssh://git@ssh.github.com:443/#')"
+    ok "GitHub terjangkau lewat SSH port 443 (port 22 diblokir)"
+  else
+    gagal "GitHub tidak terjangkau (HTTPS maupun SSH). Minta jaringan membuka akses keluar ke github.com port 443"; KURANG=1
+  fi
 fi
 
 [ "$KURANG" -eq 0 ] || henti "lengkapi prasyarat di atas, lalu jalankan ulang."
 if [ "$HANYA_CEK" -eq 1 ]; then echo; echo "Semua prasyarat terpenuhi. Tidak ada yang diubah (--cek)."; exit 0; fi
 [ -n "$DOMAIN" ] || henti "isi --domain, misalnya --domain pemetaan.contoh.go.id"
 
-# ---------------------------------------------------------------- deploy key
-info "Kunci akses repo (deploy key, baca saja)"
+# ---------------------------------------------------------------- deploy key (hanya bila HTTPS tidak bisa)
 mkdir -p "$ETC" && chmod 750 "$ETC"
-if [ ! -f "$KUNCI" ]; then
-  ssh-keygen -q -t ed25519 -N "" -C "pemetaan-deploy@$(hostname)" -f "$KUNCI"
-  ok "kunci baru dibuat: $KUNCI"
-else
-  ok "kunci sudah ada: $KUNCI"
+GIT_SSH=""
+if [ "$CARA_AKSES" = ssh ]; then
+  info "Kunci akses repo (deploy key, baca saja)"
+  if [ ! -f "$KUNCI" ]; then
+    ssh-keygen -q -t ed25519 -N "" -C "pemetaan-deploy@$(hostname)" -f "$KUNCI"
+    ok "kunci baru dibuat: $KUNCI"
+  else
+    ok "kunci sudah ada: $KUNCI"
+  fi
+  chmod 600 "$KUNCI"
+  GIT_SSH="ssh -i $KUNCI -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  if ! GIT_SSH_COMMAND="$GIT_SSH" git ls-remote --heads "$REPO" "$CABANG" >/dev/null 2>&1; then
+    echo
+    echo "  Repo belum bisa dibaca dengan kunci ini. KIRIM kunci publik di bawah ke pemilik repo"
+    echo "  (aman dibagikan) untuk didaftarkan sebagai Deploy key (baca saja), lalu jalankan ulang skrip ini:"
+    echo
+    sed 's/^/    /' "$KUNCI.pub"
+    echo
+    exit 2
+  fi
+  ok "repo bisa dibaca dengan deploy key"
 fi
-chmod 600 "$KUNCI"
-if [ "$SSH_HOST_GITHUB" = ssh.github.com ]; then
-  REPO="$(printf '%s' "$REPO" | sed -E 's#^git@github\.com:#ssh://git@ssh.github.com:443/#')"
-fi
-GIT_SSH="ssh -i $KUNCI -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-
-if ! GIT_SSH_COMMAND="$GIT_SSH" git ls-remote --heads "$REPO" "$CABANG" >/dev/null 2>&1; then
-  echo
-  echo "  Repo belum bisa dibaca dengan kunci ini. KIRIM kunci publik di bawah ke pemilik repo"
-  echo "  (aman dibagikan) untuk didaftarkan sebagai Deploy key (baca saja), lalu jalankan ulang skrip ini:"
-  echo
-  sed 's/^/    /' "$KUNCI.pub"
-  echo
-  exit 2
-fi
-ok "repo bisa dibaca"
 
 # ---------------------------------------------------------------- kode
 info "Kode aplikasi di $DIR"
 if [ -d "$DIR/.git" ]; then
   ok "sudah ada (diperbarui saat deploy)"
 else
-  GIT_SSH_COMMAND="$GIT_SSH" git clone -q --branch "$CABANG" "$REPO" "$DIR"
+  GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="${GIT_SSH:-ssh}" git clone -q --branch "$CABANG" "$REPO" "$DIR"
   ok "di-clone"
 fi
-git -C "$DIR" config core.sshCommand "$GIT_SSH"
 git -C "$DIR" remote set-url origin "$REPO"
+if [ "$CARA_AKSES" = ssh ]; then
+  git -C "$DIR" config core.sshCommand "$GIT_SSH"
+else
+  git -C "$DIR" config --unset core.sshCommand 2>/dev/null || true
+fi
 git config --global --add safe.directory "$DIR" 2>/dev/null || true
 
 # ---------------------------------------------------------------- pengaturan

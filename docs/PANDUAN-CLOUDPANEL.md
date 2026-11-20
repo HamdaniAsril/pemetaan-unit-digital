@@ -18,7 +18,7 @@ Ada dua pihak di panduan ini:
 | CloudPanel dengan **PHP 8.4** | Ekstensi `pdo_sqlite`, `sqlite3`, `intl`, `gd`, `zip`, `mbstring` aktif. Skrip memeriksanya. |
 | Domain atau subdomain | Mengarah ke IP server, misalnya `pemetaan.contoh.go.id`. |
 | Akses SSH sebagai **site user** | Disediakan CloudPanel (menu site → SSH/FTP). |
-| Akses keluar ke `github.com` | SSH port 22. Kalau diblokir, port 443 (`ssh.github.com`) juga bisa. |
+| Akses keluar ke `github.com` | HTTPS (port 443) sudah cukup. Repo-nya publik, jadi kode diambil tanpa kunci. |
 | Akses masuk HTTPS (443) dari internet | Supaya GitHub bisa mengirim pemberitahuan pembaruan. |
 
 Database memakai **SQLite** (satu berkas). Tidak perlu membuat database MySQL di CloudPanel.
@@ -51,22 +51,15 @@ Semua baris harus bertanda ✔.
 ```bash
 bash pasang-cloudpanel.sh --domain pemetaan.contoh.go.id
 ```
-Saat pertama kali dijalankan, skrip **berhenti** dan menampilkan sebuah **kunci publik** (diawali `ssh-ed25519 …`).
-
-➡️ **Kirim kunci publik itu ke pemilik repo.** Kunci ini aman dibagikan dan hanya memberi akses **baca** ke kode.
-
-### Langkah 3: setelah pemilik repo mengabari kunci sudah didaftarkan
-Jalankan perintah yang sama sekali lagi:
-```bash
-bash pasang-cloudpanel.sh --domain pemetaan.contoh.go.id
-```
-Kali ini skrip akan:
-- mengambil kode ke `~/htdocs/pemetaan.contoh.go.id`. Isi contoh dari CloudPanel di folder itu dipindah ke `~/.pemetaan/`, tidak dihapus.
+Skrip akan:
+- mengambil kode lewat HTTPS ke `~/htdocs/pemetaan.contoh.go.id`. Repo-nya publik, jadi tidak perlu kunci. Isi contoh dari CloudPanel di folder itu dipindah ke `~/.pemetaan/`, tidak dihapus.
 - membuat `.env` dengan kunci aplikasi dan rahasia webhook acak
 - menjalankan **seluruh test** di folder terpisah
 - kalau semua lulus: memasang dependensi, membuat **database baru**, dan mengimpor **49 OPD dan 603 unit**
 
 Skrip ini aman dijalankan berulang. Kunci aplikasi, rahasia, dan database yang sudah ada tidak ditimpa.
+
+> **Hanya bila repo suatu saat dijadikan privat:** skrip otomatis beralih ke SSH dan berhenti sambil menampilkan **kunci publik** (`ssh-ed25519 …`). Kirim kunci itu ke pemilik repo untuk didaftarkan, lalu jalankan ulang perintah yang sama.
 
 > **Data awal:** server Pemda memulai dengan database baru. Struktur OPD dan unit sudah terisi, sedangkan akun, jawaban, dan pengaturan masih kosong.
 
@@ -99,13 +92,13 @@ Kata sandinya ditanyakan dua kali. Setelah itu, admin masuk di `https://pemetaan
 
 ## 7. Yang dikerjakan pemilik repo
 
-1. **Mendaftarkan kunci publik** dari Langkah 2: GitHub → repo → Settings → Deploy keys → Add deploy key. Biarkan centang "Allow write access" **kosong**.
-2. **Mendaftarkan webhook** dari bagian 5: Settings → Webhooks → Add webhook.
+1. **Mendaftarkan webhook** dari bagian 5: Settings → Webhooks → Add webhook.
    - Payload URL: `https://<domain>/hooks/github`
    - Content type: `application/json`
    - Secret: rahasia dari tim Pemda
    - Event: *Just the push event*
-3. Mengecek **Recent Deliveries**. Ping pertama harus menjawab **200** (`pong`).
+2. Mengecek **Recent Deliveries**. Ping pertama harus menjawab **200** (`pong`).
+3. *(Hanya bila repo privat)* mendaftarkan kunci publik dari tim Pemda: Settings → Deploy keys → Add deploy key. Biarkan centang "Allow write access" kosong.
 
 ## 8. Cara kerja deploy otomatis
 
@@ -143,14 +136,15 @@ tail -50 ~/.pemetaan/deploy.log
 | Kode | `~/htdocs/<domain>` (root web: `aplikasi/public`) |
 | Pengaturan aplikasi | `aplikasi/.env` (setelah mengubahnya, jalankan `php8.4 artisan optimize` agar terbaca) |
 | Database | `aplikasi/storage/database.sqlite` |
-| Pengaturan deploy dan deploy key | `~/.pemetaan/` |
+| Pengaturan dan log deploy | `~/.pemetaan/` |
 
 ## 10. Bila ada masalah
 
 | Gejala | Penyebab umum | Langkah |
 |---|---|---|
 | `--cek` gagal di ekstensi PHP | Ekstensi belum aktif di PHP 8.4 site | Aktifkan lewat CloudPanel (PHP settings) atau minta admin server |
-| Skrip berhenti menampilkan kunci publik | Kunci belum didaftarkan di repo | Kirim kunci ke pemilik repo, tunggu, lalu jalankan ulang |
+| Skrip berhenti menampilkan kunci publik | Repo sedang privat, dan kunci belum didaftarkan | Kirim kunci ke pemilik repo, tunggu, lalu jalankan ulang |
+| "GitHub tidak terjangkau" | HTTPS keluar ke github.com diblokir | Minta jaringan membuka akses keluar ke `github.com:443` |
 | Halaman 404 di semua alamat | Root Directory belum `aplikasi/public` | Ubah di Settings site |
 | Webhook di GitHub tidak 200 | Rahasia beda, atau situs sedang dalam mode pemeliharaan | Cocokkan rahasia di GitHub dengan `.env`; coba Redeliver |
 | Push tidak ter-deploy | Cron deploy belum dibuat, atau test gagal | Cek tab Cron Jobs; `tail -80 ~/.pemetaan/deploy.log`, cari `GAGAL` |
