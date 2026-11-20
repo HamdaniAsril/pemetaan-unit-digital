@@ -156,7 +156,8 @@ cat > "$KONFIG_DIR/deploy.env" <<EOF
 REPO_DIR=$DIR
 DEPLOY_BRANCH=$CABANG
 PHP_BIN=$PHP_BIN
-DB_DATABASE=$DB
+# Path database live untuk backup (BUKAN DB_DATABASE, agar tidak terbawa ke proses test).
+DB_BERKAS=$DB
 EOF
 ok "$KONFIG_DIR/deploy.env"
 

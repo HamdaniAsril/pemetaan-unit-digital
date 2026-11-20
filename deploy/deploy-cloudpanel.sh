@@ -18,6 +18,8 @@ main() {
   set -a; . "$konfig"; set +a
   : "${REPO_DIR:?REPO_DIR belum diisi}" "${PHP_BIN:=php}" "${DEPLOY_BRANCH:=main}"
   local app="$REPO_DIR/aplikasi" tanda="$REPO_DIR/aplikasi/storage/app/deploy-diminta"
+  # Path database live. Sengaja TIDAK di-export: proses test tidak boleh melihatnya.
+  local db_live="${DB_BERKAS:-$app/storage/database.sqlite}"
   local composer; composer="$(command -v composer)"
 
   if [ "${1:-}" = "--bila-diminta" ]; then
@@ -25,7 +27,9 @@ main() {
   fi
 
   # Kunci sederhana dan portabel: satu deploy pada satu waktu.
-  local kunci="$HOME/.pemetaan/deploy.kunci"
+  # Global (bukan local): trap EXIT berjalan setelah main selesai.
+  KUNCI_DEPLOY="$HOME/.pemetaan/deploy.kunci"; UJI_DIR=""; DIBUKA=1
+  local kunci="$KUNCI_DEPLOY"
   if ! mkdir "$kunci" 2>/dev/null; then
     if [ -f "$kunci/pid" ] && kill -0 "$(cat "$kunci/pid")" 2>/dev/null; then
       echo "Deploy lain sedang berjalan; dilewati."; exit 0
@@ -33,8 +37,7 @@ main() {
     rm -rf "$kunci"; mkdir "$kunci"
   fi
   echo $$ > "$kunci/pid"
-  local uji=""
-  trap 'rm -rf "$kunci"; [ -n "$uji" ] && git -C "$REPO_DIR" worktree remove --force "$uji" 2>/dev/null; true' EXIT
+  trap 'rm -rf "$KUNCI_DEPLOY"; [ -n "$UJI_DIR" ] && git -C "$REPO_DIR" worktree remove --force "$UJI_DIR" 2>/dev/null; [ "$DIBUKA" = 1 ] || "$PHP_BIN" "$REPO_DIR/aplikasi/artisan" up >/dev/null 2>&1; true' EXIT
   rm -f "$tanda"
 
   # Jalan ulang (setelah skrip berubah) sudah tercatat lewat tee milik proses pertama.
@@ -50,27 +53,28 @@ main() {
   # 1. Gerbang test, di salinan terpisah. Situs live belum disentuh.
   #    (Dilewati pada jalan ulang: commit yang sama sudah lulus di proses pertama.)
   if [ -z "${PEMETAAN_LEWATI_UJI:-}" ]; then
-    uji="$(mktemp -d "$HOME/.pemetaan/uji.XXXXXX")"; rmdir "$uji"
-    git worktree add --detach --quiet "$uji" "$target"
+    UJI_DIR="$(mktemp -d "$HOME/.pemetaan/uji.XXXXXX")"; rmdir "$UJI_DIR"
+    git worktree add --detach --quiet "$UJI_DIR" "$target"
+    # Environment bersih: tidak ada DB_*, APP_* atau rahasia dari server live yang ikut terbawa ke test.
     (
-      cd "$uji/aplikasi"
-      "$PHP_BIN" "$composer" install --no-interaction --prefer-dist --no-progress --quiet
+      cd "$UJI_DIR/aplikasi"
+      bersih() { env -i HOME="$HOME" PATH="$PATH" COMPOSER_HOME="${COMPOSER_HOME:-$HOME/.config/composer}" "$@"; }
+      bersih "$PHP_BIN" "$composer" install --no-interaction --prefer-dist --no-progress --quiet
       cp .env.example .env
-      "$PHP_BIN" artisan key:generate --ansi --no-interaction >/dev/null
-      "$PHP_BIN" vendor/bin/pest --colors=never
+      bersih "$PHP_BIN" artisan key:generate --ansi --no-interaction >/dev/null
+      bersih "$PHP_BIN" vendor/bin/pest --colors=never
     ) || { echo "== GAGAL: test tidak lulus, deploy dibatalkan. Situs tetap memakai versi $(git rev-parse --short "$sebelum"). =="; exit 1; }
-    git worktree remove --force "$uji"; uji=""
+    git worktree remove --force "$UJI_DIR"; UJI_DIR=""
   fi
 
   # 2. Perbarui situs live.
   cd "$app"
-  if [ -f "${DB_DATABASE:-$app/storage/database.sqlite}" ] && [ -f vendor/autoload.php ]; then
+  if [ -f "$db_live" ] && [ -f vendor/autoload.php ]; then
     "$PHP_BIN" artisan pemetaan:backup || echo "Peringatan: backup sebelum deploy gagal."
   fi
-  local dibuka=0
   if [ -f vendor/autoload.php ]; then
+    DIBUKA=0
     "$PHP_BIN" artisan down --retry=15 || true
-    trap 'rm -rf "$kunci"; [ "$dibuka" = 1 ] || "$PHP_BIN" "$app/artisan" up >/dev/null 2>&1; true' EXIT
   fi
 
   git -C "$REPO_DIR" reset --hard --quiet "$target"
@@ -82,7 +86,7 @@ main() {
   fi
 
   "$PHP_BIN" "$composer" install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader --quiet
-  touch "${DB_DATABASE:-$app/storage/database.sqlite}"
+  touch "$db_live"
   "$PHP_BIN" artisan migrate --force --no-interaction
   if [ "$("$PHP_BIN" artisan tinker --execute 'echo App\Models\Opd::count();' 2>/dev/null | tail -n1)" = "0" ]; then
     echo "Database kosong, mengimpor struktur awal..."
@@ -90,7 +94,7 @@ main() {
   fi
   "$PHP_BIN" artisan optimize
   "$PHP_BIN" artisan up
-  dibuka=1
+  DIBUKA=1
   echo "== selesai $(date -Is): $(git -C "$REPO_DIR" log -1 --format='%h %s') =="
 }
 

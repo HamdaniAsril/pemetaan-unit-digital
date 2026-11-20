@@ -15,3 +15,15 @@ test('overlay VPS menyambungkan layanan pemetaan ke jaringan Nginx bersama', fun
         ->and($vps)->toMatch('/^  pemetaan:\s*\n    networks: \[default, proxy\]/m')
         ->and($vps)->not->toMatch('/^  app:\s*$/m');
 });
+
+test('phpunit memaksa database test :memory: walau DB_DATABASE ada di environment (melindungi database live)', function () {
+    $xml = file_get_contents(base_path('phpunit.xml'));
+    expect($xml)->toMatch('/<server name="DB_DATABASE" value=":memory:" force="true"\/>/')
+        ->and($xml)->toMatch('/<server name="DB_CONNECTION" value="sqlite" force="true"\/>/')
+        ->and($xml)->toMatch('/<env name="DB_DATABASE" value=":memory:" force="true"\/>/');
+});
+
+test('database yang dipakai saat test selalu :memory:', function () {
+    expect(config('database.default'))->toBe('sqlite')
+        ->and(config('database.connections.sqlite.database'))->toBe(':memory:');
+});
