@@ -35,10 +35,11 @@ Database memakai **SQLite** (satu berkas). Tidak perlu membuat database MySQL di
 
 ## 3. Menjalankan skrip pasang
 
-Berkas `pasang-cloudpanel.sh` dikirim oleh pemilik repo. Salin ke server, lalu **masuk SSH sebagai site user** (bukan root):
+**Masuk SSH sebagai site user** (bukan root), lalu unduh skrip pasang langsung dari GitHub:
 
 ```bash
 ssh pemetaan@<ip-server>
+curl -fsSLO https://raw.githubusercontent.com/HamdaniAsril/pemetaan-unit-digital/main/deploy/pasang-cloudpanel.sh
 ```
 
 ### Langkah 1: periksa prasyarat (tidak mengubah apa pun)

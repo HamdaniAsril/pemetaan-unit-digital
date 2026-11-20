@@ -29,7 +29,11 @@ Aplikasi dan webhook **hanya mendengar di `127.0.0.1`** (bawaan port 8090 dan 90
 
 ## 2. Langkah pemasangan
 
-Berkas `pasang.sh` dikirim oleh pemilik repo. Salin ke server, lalu:
+Unduh skrip pasang langsung dari GitHub:
+```bash
+curl -fsSLO https://raw.githubusercontent.com/HamdaniAsril/pemetaan-unit-digital/main/deploy/pasang.sh
+```
+Lalu:
 
 ### Langkah 1: periksa prasyarat (tidak mengubah apa pun)
 ```bash
