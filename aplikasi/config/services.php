@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Webhook deploy otomatis untuk server CloudPanel (lihat deploy/deploy-cloudpanel.sh).
+    'github' => [
+        'webhook_secret' => env('GITHUB_WEBHOOK_SECRET'),
+        'deploy_branch' => env('DEPLOY_BRANCH', 'main'),
+    ],
+
 ];

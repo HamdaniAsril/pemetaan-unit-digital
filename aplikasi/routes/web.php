@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\UnduhController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\GantiPasswordController;
 use App\Http\Controllers\IsiController;
+use App\Http\Controllers\WebhookGithubController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect(auth()->check() ? LoginController::beranda() : '/login'));
@@ -29,3 +30,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin/unduh')->group(function () {
     Route::get('/rekap', [UnduhController::class, 'rekap'])->name('unduh.rekap');
     Route::get('/backup', [UnduhController::class, 'backup'])->name('unduh.backup');
 });
+
+// Webhook GitHub (server CloudPanel). Tanpa sesi/CSRF: keasliannya dicek lewat tanda tangan HMAC.
+Route::post('/hooks/github', WebhookGithubController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->middleware('throttle:30,1');
