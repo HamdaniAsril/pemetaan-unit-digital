@@ -39,6 +39,10 @@ class AdminPanelProvider extends PanelProvider
             ->font('Manrope', url: '/fonts/fonts.css', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->darkMode(false)
             ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.tema'))
+            // Versi yang berjalan (commit + waktu deploy), untuk memastikan server ikut terbarui setelah push.
+            ->renderHook(\Filament\View\PanelsRenderHook::SIDEBAR_FOOTER, fn () => new \Illuminate\Support\HtmlString(
+                '<div style="padding:.75rem 1.5rem;font-size:.75rem;color:var(--tinta-2)">'.e(\App\Pemetaan\Versi::teks()).'</div>'
+            ))
             // Di HP menu samping selalu tertutup saat halaman dibuka (Filament menyimpan status terakhirnya).
             ->renderHook(\Filament\View\PanelsRenderHook::BODY_END, fn () => new \Illuminate\Support\HtmlString(
                 '<script>document.addEventListener("alpine:initialized",()=>{if(innerWidth<1024)Alpine.store("sidebar").close()})</script>'

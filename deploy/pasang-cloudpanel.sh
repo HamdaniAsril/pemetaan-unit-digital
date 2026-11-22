@@ -184,7 +184,7 @@ ok "$KONFIG_DIR/deploy.env"
 
 # ---------------------------------------------------------------- deploy pertama
 info "Deploy pertama (seluruh test, lalu pasang). Beberapa menit."
-"$DIR/deploy/deploy-cloudpanel.sh"
+"$DIR/deploy/deploy-cloudpanel.sh" --paksa
 "$PHP_BIN" "$APP/artisan" tinker --execute 'echo "Data: ", App\Models\Opd::count(), " OPD, ", App\Models\Unit::count(), " unit", PHP_EOL;' 2>/dev/null | tail -n1
 
 # ---------------------------------------------------------------- ringkasan
@@ -194,10 +194,10 @@ cat <<EOF
   2. SSL/TLS → Let's Encrypt untuk $DOMAIN
   3. Cron Jobs → tambahkan DUA baris (jalankan tiap menit, * * * * *):
        $PHP_BIN $APP/artisan schedule:run >> /dev/null 2>&1
-       $DIR/deploy/deploy-cloudpanel.sh --bila-diminta >> /dev/null 2>&1
-  4. KIRIM ke pemilik repo lewat jalur PRIBADI (bukan grup), untuk didaftarkan sebagai webhook GitHub:
-       URL     : https://$DOMAIN/hooks/github
-       Rahasia : lihat dengan  grep GITHUB_WEBHOOK_SECRET $ENV_APP
+       $DIR/deploy/deploy-cloudpanel.sh >> /dev/null 2>&1
+     Cron kedua = deploy otomatis: setiap menit mengecek GitHub dan HANYA men-deploy bila ada commit baru.
+  4. (Opsional) Webhook GitHub agar deploy lebih cepat: kirim URL https://$DOMAIN/hooks/github dan rahasia
+       (grep GITHUB_WEBHOOK_SECRET $ENV_APP) ke pemilik repo lewat jalur PRIBADI. Tidak wajib.
   5. Buat akun admin:
        $PHP_BIN $APP/artisan pemetaan:buat-admin admin
   Log deploy: $KONFIG_DIR/deploy.log

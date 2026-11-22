@@ -31,6 +31,8 @@ main() {
   fi
 
   cd aplikasi
+  # Versi yang berjalan (ikut masuk image), tampil di panel admin.
+  printf '%s %s\n' "$(git -C "$repo" rev-parse --short HEAD)" "$(date -Is)" > versi.txt
   # Test dijalankan di tahap build "uji". Gagal di sini = berhenti, versi berjalan tidak tersentuh.
   docker build --target uji -t pemetaan-app:uji .
 

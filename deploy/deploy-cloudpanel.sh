@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # Deploy Pemetaan Unit Digital di site CloudPanel (berjalan sebagai site user, tanpa root/Docker).
 #
-#   deploy-cloudpanel.sh               deploy sekarang
-#   deploy-cloudpanel.sh --bila-diminta deploy hanya bila webhook menaruh tanda (dipanggil cron tiap menit)
+#   deploy-cloudpanel.sh                     deploy HANYA bila ada commit baru di GitHub (untuk cron tiap menit)
+#   deploy-cloudpanel.sh --bila-ada-pembaruan  sama dengan di atas
+#   deploy-cloudpanel.sh --bila-diminta        deploy bila webhook menaruh tanda (opsional, lebih cepat)
+#   deploy-cloudpanel.sh --paksa               deploy sekarang walau tidak ada commit baru
+#
+# Tanpa commit baru, skrip langsung selesai dalam beberapa detik: tanpa test, tanpa mode pemeliharaan,
+# tanpa backup, dan tanpa menulis log. Jadi aman dijalankan cron setiap menit.
 #
 # Urutan: ambil kode → jalankan SELURUH test di folder sementara → (gagal = berhenti, situs tidak tersentuh)
 #         → backup database → mode pemeliharaan → perbarui kode → composer → migrasi → cache → situs dibuka lagi.
@@ -22,9 +27,17 @@ main() {
   local db_live="${DB_BERKAS:-$app/storage/database.sqlite}"
   local composer; composer="$(command -v composer)"
 
-  if [ "${1:-}" = "--bila-diminta" ]; then
-    [ -f "$tanda" ] || exit 0
-  fi
+  # Paksa: --paksa, tanda dari webhook, jalan ulang setelah skrip berubah (versi lama memanggil tanpa
+  # argumen), atau aplikasi belum pernah terpasang lengkap.
+  local paksa=0
+  case "${1:-}" in
+    --paksa) paksa=1 ;;
+    --bila-diminta) [ -f "$tanda" ] || exit 0; paksa=1 ;;
+    ""|--bila-ada-pembaruan) ;;
+    *) echo "Pilihan tidak dikenal: $1"; exit 64 ;;
+  esac
+  [ -z "${PEMETAAN_JALAN_ULANG:-}" ] || paksa=1
+  [ -f "$app/vendor/autoload.php" ] || paksa=1
 
   # Kunci sederhana dan portabel: satu deploy pada satu waktu.
   # Global (bukan local): trap EXIT berjalan setelah main selesai.
@@ -38,6 +51,12 @@ main() {
   fi
   echo $$ > "$kunci/pid"
   trap 'rm -rf "$KUNCI_DEPLOY"; [ -n "$UJI_DIR" ] && git -C "$REPO_DIR" worktree remove --force "$UJI_DIR" 2>/dev/null; [ "$DIBUKA" = 1 ] || "$PHP_BIN" "$REPO_DIR/aplikasi/artisan" up >/dev/null 2>&1; true' EXIT
+
+  # Tidak ada commit baru dan tidak dipaksa: selesai diam-diam (cron tiap menit tidak mengotori log).
+  if [ "$paksa" = 0 ]; then
+    git -C "$REPO_DIR" fetch --quiet --prune origin "$DEPLOY_BRANCH" 2>/dev/null || exit 0
+    [ "$(git -C "$REPO_DIR" rev-parse HEAD)" != "$(git -C "$REPO_DIR" rev-parse "origin/$DEPLOY_BRANCH")" ] || exit 0
+  fi
   rm -f "$tanda"
 
   # Jalan ulang (setelah skrip berubah) sudah tercatat lewat tee milik proses pertama.
@@ -82,7 +101,7 @@ main() {
   if [ -z "${PEMETAAN_JALAN_ULANG:-}" ] && ! git -C "$REPO_DIR" diff --quiet "$sebelum" "$target" -- deploy/deploy-cloudpanel.sh; then
     echo "deploy-cloudpanel.sh berubah; menjalankan versi terbaru."
     rm -rf "$kunci"
-    PEMETAAN_JALAN_ULANG=1 PEMETAAN_LEWATI_UJI=1 PEMETAAN_SEBELUM="$sebelum" exec "$REPO_DIR/deploy/deploy-cloudpanel.sh"
+    PEMETAAN_JALAN_ULANG=1 PEMETAAN_LEWATI_UJI=1 PEMETAAN_SEBELUM="$sebelum" exec "$REPO_DIR/deploy/deploy-cloudpanel.sh" --paksa
   fi
 
   "$PHP_BIN" "$composer" install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader --quiet
@@ -92,6 +111,8 @@ main() {
     echo "Database kosong, mengimpor struktur awal..."
     "$PHP_BIN" artisan pemetaan:impor
   fi
+  # Versi yang berjalan, tampil di panel admin (bawah menu samping).
+  printf '%s %s\n' "$(git -C "$REPO_DIR" rev-parse --short HEAD)" "$(date -Is)" > "$app/versi.txt"
   "$PHP_BIN" artisan optimize
   "$PHP_BIN" artisan up
   DIBUKA=1

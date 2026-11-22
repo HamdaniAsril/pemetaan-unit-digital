@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Ditulis skrip deploy (commit + waktu), tidak disimpan di git
+/versi.txt
