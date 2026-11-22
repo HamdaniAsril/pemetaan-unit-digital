@@ -47,6 +47,15 @@ main() {
     systemctl restart pemetaan-webhook.service
   fi
   echo "== selesai $(date -Is) =="
+
+  # Push yang datang SELAMA deploy ini berjalan tidak memicu deploy baru (systemd mengabaikan start
+  # untuk layanan yang masih aktif). Jadi cek sekali lagi, dan deploy ulang bila main sudah maju.
+  git -C "$repo" fetch --quiet origin "$branch" || true
+  if [ "$(git -C "$repo" rev-parse HEAD)" != "$(git -C "$repo" rev-parse "origin/$branch")" ]; then
+    echo "Ada commit baru selama deploy; deploy lagi."
+    unset PEMETAAN_JALAN_ULANG PEMETAAN_SEBELUM
+    exec "$repo/deploy/deploy.sh"
+  fi
 }
 
 main "$@"
