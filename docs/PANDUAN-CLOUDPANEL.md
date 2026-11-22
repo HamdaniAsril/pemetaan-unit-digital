@@ -1,7 +1,7 @@
 # Panduan Pemasangan di Server Pemda (CloudPanel) — Pemetaan Unit Digital
 
 Untuk: **tim IT Pemda** yang mengelola server dengan **CloudPanel**.
-Hasil akhir: aplikasi berjalan sebagai **site PHP 8.4** di CloudPanel (misalnya `https://pemetaan.contoh.go.id`). Setiap pembaruan kode di GitHub **terpasang otomatis** dalam ±1–3 menit, setelah seluruh test lulus.
+Hasil akhir: aplikasi berjalan sebagai **site PHP 8.4** di CloudPanel (misalnya `https://pemetaan.contoh.go.id`). Setiap pembaruan kode di GitHub **terpasang otomatis** lewat cron dalam ±1–3 menit, setelah seluruh test lulus. Webhook tidak wajib.
 
 Tidak perlu akses root dan tidak perlu Docker. Semua berjalan sebagai **site user** CloudPanel.
 
@@ -71,16 +71,19 @@ Buka site, lalu tab **Cron Jobs → Add Cron Job**. Tambahkan **dua** cron, kedu
 | Untuk | Perintah |
 |---|---|
 | Backup harian dan tugas terjadwal | `php8.4 /home/pemetaan/htdocs/pemetaan.contoh.go.id/aplikasi/artisan schedule:run >> /dev/null 2>&1` |
-| Deploy otomatis | `/home/pemetaan/htdocs/pemetaan.contoh.go.id/deploy/deploy-cloudpanel.sh --bila-diminta >> /dev/null 2>&1` |
+| Deploy otomatis | `/home/pemetaan/htdocs/pemetaan.contoh.go.id/deploy/deploy-cloudpanel.sh >> /dev/null 2>&1` |
 
-Cron kedua hanya bekerja kalau ada tanda dari webhook. Selain itu, ia langsung selesai tanpa melakukan apa pun.
+Cron kedua mengecek GitHub setiap menit dan **hanya men-deploy kalau ada commit baru**. Kalau tidak ada perubahan, ia selesai dalam hitungan detik tanpa test, tanpa mode pemeliharaan, dan tanpa backup. Jadi cron ini saja **sudah cukup untuk deploy otomatis**, tanpa webhook.
 
-## 5. Kirim data webhook ke pemilik repo (lewat jalur PRIBADI)
+> **Server yang dipasang sebelum 22 November 2026** dan memakai cron `… --bila-diminta`: jalankan **sekali** secara manual `~/htdocs/<domain>/deploy/deploy-cloudpanel.sh` supaya skripnya terbarui. Setelah itu, ubah cron deploy menjadi perintah di tabel di atas (tanpa `--bila-diminta`).
 
-```bash
-grep GITHUB_WEBHOOK_SECRET ~/htdocs/pemetaan.contoh.go.id/aplikasi/.env
-```
-Kirim **URL** `https://pemetaan.contoh.go.id/hooks/github` dan **rahasia** di atas ke pemilik repo lewat pesan pribadi. Rahasia ini **jangan** dikirim ke grup atau ditulis di dokumen bersama.
+**Cara memastikan deploy otomatis bekerja:** masuk ke panel admin. Di bawah menu samping tertulis **"Versi <kode commit> · <waktu deploy>"**. Setelah ada push ke `main`, dalam 1–3 menit kodenya harus berubah mengikuti commit terbaru di GitHub.
+
+## 5. (Opsional) Webhook GitHub
+
+Tidak wajib. Webhook hanya membuat deploy dimulai beberapa detik setelah push, tanpa menunggu giliran cron.
+- Kalau situs berada di belakang **Cloudflare** dengan tantangan anti-bot, buat dulu aturan WAF **Skip** untuk `POST /hooks/github` di host ini. Tanpa aturan itu, GitHub akan diblokir.
+- Kirim **URL** `https://pemetaan.contoh.go.id/hooks/github` dan **rahasia** dari `grep GITHUB_WEBHOOK_SECRET ~/htdocs/pemetaan.contoh.go.id/aplikasi/.env` ke pemilik repo **lewat pesan pribadi**.
 
 ## 6. Akun admin dan akun OPD
 
@@ -95,7 +98,7 @@ Kata sandinya ditanyakan dua kali. Setelah itu, admin masuk di `https://pemetaan
 
 ## 7. Yang dikerjakan pemilik repo
 
-1. **Mendaftarkan webhook** dari bagian 5: Settings → Webhooks → Add webhook.
+1. *(Opsional)* **mendaftarkan webhook** dari bagian 5: Settings → Webhooks → Add webhook.
    - Payload URL: `https://<domain>/hooks/github`
    - Content type: `application/json`
    - Secret: rahasia dari tim Pemda
@@ -107,13 +110,15 @@ Kata sandinya ditanyakan dua kali. Setelah itu, admin masuk di `https://pemetaan
 
 ```
 git push ke main
-  → GitHub memanggil https://<domain>/hooks/github (tanda tangan HMAC dicek oleh aplikasi)
-  → aplikasi menaruh tanda "deploy diminta" (aplikasi tidak menjalankan perintah apa pun)
-  → cron (tiap menit) melihat tanda → deploy-cloudpanel.sh:
-       1. ambil kode terbaru
-       2. jalankan SELURUH test di folder terpisah  ← gagal = berhenti, situs tidak tersentuh
-       3. backup database
-       4. mode pemeliharaan (±20 detik) → perbarui kode, dependensi, migrasi, cache → situs dibuka lagi
+  → cron (tiap menit) menjalankan deploy-cloudpanel.sh, yang mengecek GitHub:
+       tidak ada commit baru → selesai (beberapa detik, tidak mengubah apa pun)
+       ada commit baru →
+         1. ambil kode terbaru
+         2. jalankan SELURUH test di folder terpisah  ← gagal = berhenti, situs tidak tersentuh
+         3. backup database
+         4. mode pemeliharaan (±20 detik) → perbarui kode, dependensi, migrasi, cache → situs dibuka lagi
+         5. catat versi baru (tampil di panel admin)
+  (opsional) webhook GitHub → aplikasi menaruh tanda → cron berikutnya langsung men-deploy
 ```
 
 **Log deploy:**
@@ -125,8 +130,9 @@ tail -50 ~/.pemetaan/deploy.log
 **Deploy manual:**
 
 ```bash
-~/htdocs/<domain>/deploy/deploy-cloudpanel.sh
+~/htdocs/<domain>/deploy/deploy-cloudpanel.sh --paksa
 ```
+Tanpa `--paksa`, skrip hanya men-deploy kalau ada commit baru.
 
 ## 9. Operasional
 
@@ -149,6 +155,6 @@ tail -50 ~/.pemetaan/deploy.log
 | Skrip berhenti menampilkan kunci publik | Repo sedang privat, dan kunci belum didaftarkan | Kirim kunci ke pemilik repo, tunggu, lalu jalankan ulang |
 | "GitHub tidak terjangkau" | HTTPS keluar ke github.com diblokir | Minta jaringan membuka akses keluar ke `github.com:443` |
 | Halaman 404 di semua alamat | Root Directory belum `aplikasi/public` | Ubah di Settings site |
-| Webhook di GitHub tidak 200 | Rahasia beda, atau situs sedang dalam mode pemeliharaan | Cocokkan rahasia di GitHub dengan `.env`; coba Redeliver |
-| Push tidak ter-deploy | Cron deploy belum dibuat, atau test gagal | Cek tab Cron Jobs; `tail -80 ~/.pemetaan/deploy.log`, cari `GAGAL` |
+| Webhook di GitHub tidak 200 (opsional) | Diblokir Cloudflare, rahasia beda, atau situs sedang dalam mode pemeliharaan | Aturan WAF Skip untuk `/hooks/github`; cocokkan rahasia; coba Redeliver |
+| Versi di panel admin tidak berubah setelah push | Cron deploy belum ada atau masih memakai `--bila-diminta`, atau test gagal | Cek tab Cron Jobs; `tail -80 ~/.pemetaan/deploy.log`, cari `GAGAL` |
 | Situs tertahan di "Service Unavailable" | Deploy terhenti di tengah | `php8.4 ~/htdocs/<domain>/aplikasi/artisan up`, lalu periksa log deploy |
