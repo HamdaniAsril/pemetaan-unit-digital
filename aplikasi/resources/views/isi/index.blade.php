@@ -19,8 +19,11 @@
     </div>
     <ul class="rel-daftar" id="daftarTab"></ul>
     <div class="rel-kaki" id="relKaki">
-      <a href="{{ route('akun.password') }}"><svg class="ikon"><use href="#i-kunci"/></svg> Kata sandi</a>
-      <form method="post" action="{{ route('logout') }}">@csrf<button type="submit"><svg class="ikon"><use href="#i-keluar"/></svg> Keluar</button></form>
+      <div class="pengguna">
+        <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->username, 0, 1)) }}</span>
+        <span class="pengguna-teks"><b title="{{ auth()->user()->username }}">{{ auth()->user()->username }}</b><small>Akun OPD</small></span>
+      </div>
+      <form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="keluar" title="Keluar"><svg class="ikon"><use href="#i-keluar"/></svg><span>Keluar</span></button></form>
     </div>
   </nav>
 

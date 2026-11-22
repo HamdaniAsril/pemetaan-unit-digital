@@ -38,22 +38,11 @@ test('login dibatasi setelah 5 kali gagal', function () {
     $this->assertGuest();
 });
 
-test('ganti password butuh password lama yang benar', function () {
-    $this->actingAs($this->userOpd)
-        ->post('/akun/password', ['password_lama' => 'salah', 'password' => 'barubaru1', 'password_confirmation' => 'barubaru1'])
-        ->assertSessionHasErrors('password_lama');
-
+test('fitur ganti kata sandi sudah tidak ada', function () {
+    $this->actingAs($this->userOpd)->get('/akun/password')->assertNotFound();
     $this->actingAs($this->userOpd)
         ->post('/akun/password', ['password_lama' => 'password', 'password' => 'barubaru1', 'password_confirmation' => 'barubaru1'])
-        ->assertSessionHasNoErrors();
-
-    expect(\Illuminate\Support\Facades\Hash::check('barubaru1', $this->userOpd->fresh()->password))->toBeTrue();
-});
-
-test('ganti password minimal 8 karakter', function () {
-    $this->actingAs($this->userOpd)
-        ->post('/akun/password', ['password_lama' => 'password', 'password' => 'pendek', 'password_confirmation' => 'pendek'])
-        ->assertSessionHasErrors('password');
+        ->assertNotFound();
 });
 
 test('login dibatasi per username walau IP berganti', function () {

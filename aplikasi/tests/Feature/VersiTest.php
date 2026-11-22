@@ -21,6 +21,8 @@ test('tanpa versi.txt (pengembangan lokal) tetap aman', function () {
 test('versi tampil di panel admin', function () {
     File::put(base_path('versi.txt'), "b5ab2f3 2026-11-22T10:00:00+07:00\n");
 
-    $this->actingAs(User::factory()->admin()->create())->get('/admin')
-        ->assertOk()->assertSee('Versi b5ab2f3');
+    $this->actingAs(User::factory()->admin()->create(['name' => 'admin', 'username' => 'admin']))->get('/admin')
+        ->assertOk()
+        // Urutan di kaki menu samping: versi, lalu nama akun, lalu tombol keluar.
+        ->assertSeeInOrder(['kaki-admin', 'Versi b5ab2f3', 'admin', 'Administrator', 'action="'.route('logout').'"'], false);
 });

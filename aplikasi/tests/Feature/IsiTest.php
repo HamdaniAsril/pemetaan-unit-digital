@@ -23,6 +23,16 @@ function jawab($test, $unitId, $indikator = 'mandat', $nilai = 'ya')
     return $test->postJson('/isi/jawaban', ['unit_id' => $unitId, 'indikator' => $indikator, 'nilai' => $nilai]);
 }
 
+test('kaki menu samping: nama akun dan tombol keluar, tanpa ganti sandi dan tanpa versi', function () {
+    $this->user->update(['username' => 'dinas_satu@sipresisi.rohilkab.go.id']);
+
+    $this->actingAs($this->user)->get('/isi')->assertOk()
+        ->assertSee('dinas_satu@sipresisi.rohilkab.go.id')
+        ->assertSee('action="'.route('logout').'"', false)
+        ->assertDontSee('/akun/password')
+        ->assertDontSee('Versi ');
+});
+
 test('halaman isi menampilkan tab opd sendiri', function () {
     $this->actingAs($this->user)->get('/isi')->assertOk()
         ->assertSee('Bidang Pajak Daerah II')

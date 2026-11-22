@@ -18,5 +18,18 @@
   .butir-progres i { width: 14px; height: 5px; border-radius: 3px; background: var(--garis); }
   .butir-progres i.isi { background: var(--aksen); }
   .butir-angka { color: var(--tinta-2); font-size: .875rem; }
+  /* Akun dan tombol keluar ada di kaki menu samping; menu akun bawaan di bilah atas tidak dipakai. */
+  .fi-topbar .fi-user-menu { display: none; }
+  .kaki-admin { border-top: 1px solid var(--garis); padding: .75rem 1rem .875rem 1.5rem; display: grid; gap: .625rem; }
+  .kaki-versi { font-size: .75rem; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+  .kaki-pengguna { display: flex; align-items: center; gap: .625rem; min-width: 0; }
+  .kaki-avatar { flex: none; width: 2rem; height: 2rem; border-radius: 50%; background: var(--aksen-muda); color: var(--aksen-2); font-weight: 800; font-size: .8125rem; display: grid; place-items: center; }
+  .kaki-teks { display: grid; min-width: 0; flex: 1; line-height: 1.3; font-size: .875rem; }
+  .kaki-teks b { font-weight: 700; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kaki-teks small { color: var(--tinta-2); font-size: .75rem; }
+  .kaki-pengguna form { margin: 0; flex: none; }
+  .kaki-keluar { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: .5rem; color: var(--tinta-2); }
+  .kaki-keluar:hover { background: var(--latar); color: var(--tidak); }
+  .kaki-keluar svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   ::selection { background: var(--aksen-garis); }
 </style>

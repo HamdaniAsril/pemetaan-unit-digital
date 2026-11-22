@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\UnduhController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\GantiPasswordController;
 use App\Http\Controllers\IsiController;
 use App\Http\Controllers\WebhookGithubController;
 use Illuminate\Support\Facades\Route;
@@ -16,8 +15,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
-    Route::get('/akun/password', [GantiPasswordController::class, 'edit'])->name('akun.password');
-    Route::post('/akun/password', [GantiPasswordController::class, 'update']);
 });
 
 Route::middleware(['auth', 'opd'])->group(function () {
