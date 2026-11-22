@@ -73,9 +73,11 @@ Buka site, lalu tab **Cron Jobs → Add Cron Job**. Tambahkan **dua** cron, kedu
 | Backup harian dan tugas terjadwal | `php8.4 /home/pemetaan/htdocs/pemetaan.contoh.go.id/aplikasi/artisan schedule:run >> /dev/null 2>&1` |
 | Deploy otomatis | `/home/pemetaan/htdocs/pemetaan.contoh.go.id/deploy/deploy-cloudpanel.sh >> /dev/null 2>&1` |
 
+Cron boleh dipasang lewat tab Cron Jobs CloudPanel maupun `/etc/cron.d` (dengan kolom user = site user). Skrip tidak boleh dijalankan sebagai root.
+
 Cron kedua mengecek GitHub setiap menit dan **hanya men-deploy kalau ada commit baru**. Kalau tidak ada perubahan, ia selesai dalam hitungan detik tanpa test, tanpa mode pemeliharaan, dan tanpa backup. Jadi cron ini saja **sudah cukup untuk deploy otomatis**, tanpa webhook.
 
-> **Server yang dipasang sebelum 22 November 2026** dan memakai cron `… --bila-diminta`: jalankan **sekali** secara manual `~/htdocs/<domain>/deploy/deploy-cloudpanel.sh` supaya skripnya terbarui. Setelah itu, ubah cron deploy menjadi perintah di tabel di atas (tanpa `--bila-diminta`).
+> **Server yang dipasang sebelum 22 November 2026** (cron `… --bila-diminta`): skrip lama hanya men-deploy bila ada tanda dari webhook. Jalankan **sekali** secara manual sebagai site user `~/htdocs/<domain>/deploy/deploy-cloudpanel.sh --paksa` (dari root: `sudo -u <site-user> -i /home/<site-user>/htdocs/<domain>/deploy/deploy-cloudpanel.sh --paksa`). Setelah itu cron lama boleh dibiarkan: skrip baru memperlakukan `--bila-diminta` sama dengan tanpa flag.
 
 **Cara memastikan deploy otomatis bekerja:** masuk ke panel admin. Di bawah menu samping tertulis **"Versi <kode commit> · <waktu deploy>"**. Setelah ada push ke `main`, dalam 1–3 menit kodenya harus berubah mengikuti commit terbaru di GitHub.
 
@@ -156,5 +158,5 @@ Tanpa `--paksa`, skrip hanya men-deploy kalau ada commit baru.
 | "GitHub tidak terjangkau" | HTTPS keluar ke github.com diblokir | Minta jaringan membuka akses keluar ke `github.com:443` |
 | Halaman 404 di semua alamat | Root Directory belum `aplikasi/public` | Ubah di Settings site |
 | Webhook di GitHub tidak 200 (opsional) | Diblokir Cloudflare, rahasia beda, atau situs sedang dalam mode pemeliharaan | Aturan WAF Skip untuk `/hooks/github`; cocokkan rahasia; coba Redeliver |
-| Versi di panel admin tidak berubah setelah push | Cron deploy belum ada atau masih memakai `--bila-diminta`, atau test gagal | Cek tab Cron Jobs; `tail -80 ~/.pemetaan/deploy.log`, cari `GAGAL` |
+| Versi di panel admin tidak berubah setelah push | Cron deploy belum ada, skrip masih versi sebelum 22 November 2026 (lihat bagian 4), atau test gagal | Cek tab Cron Jobs; `tail -80 ~/.pemetaan/deploy.log`, cari `GAGAL` |
 | Situs tertahan di "Service Unavailable" | Deploy terhenti di tengah | `php8.4 ~/htdocs/<domain>/aplikasi/artisan up`, lalu periksa log deploy |

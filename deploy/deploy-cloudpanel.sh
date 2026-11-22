@@ -3,9 +3,10 @@
 #
 #   deploy-cloudpanel.sh                     deploy HANYA bila ada commit baru di GitHub (untuk cron tiap menit)
 #   deploy-cloudpanel.sh --bila-ada-pembaruan  sama dengan di atas
-#   deploy-cloudpanel.sh --bila-diminta        deploy bila webhook menaruh tanda (opsional, lebih cepat)
+#   deploy-cloudpanel.sh --bila-diminta        sama dengan di atas (nama lama; tetap dipertahankan untuk cron lama)
 #   deploy-cloudpanel.sh --paksa               deploy sekarang walau tidak ada commit baru
 #
+# Tanda dari webhook (opsional) membuat deploy langsung berjalan di mode mana pun.
 # Tanpa commit baru, skrip langsung selesai dalam beberapa detik: tanpa test, tanpa mode pemeliharaan,
 # tanpa backup, dan tanpa menulis log. Jadi aman dijalankan cron setiap menit.
 #
@@ -18,6 +19,11 @@
 set -euo pipefail
 
 main() {
+  # Cron (mis. /etc/cron.d) hanya memberi PATH=/usr/bin:/bin; composer biasanya di /usr/local/bin.
+  export PATH="$PATH:/usr/local/bin:$HOME/.local/bin:$HOME/bin"
+  if [ "$(id -u)" = 0 ]; then
+    echo "Jangan dijalankan sebagai root. Jalankan sebagai site user, mis.: sudo -u <site-user> -i $0 $*"; exit 1
+  fi
   local konfig="$HOME/.pemetaan/deploy.env"
   [ -f "$konfig" ] || { echo "Belum dipasang: $konfig tidak ada. Jalankan pasang-cloudpanel.sh dulu."; exit 1; }
   set -a; . "$konfig"; set +a
@@ -25,17 +31,16 @@ main() {
   local app="$REPO_DIR/aplikasi" tanda="$REPO_DIR/aplikasi/storage/app/deploy-diminta"
   # Path database live. Sengaja TIDAK di-export: proses test tidak boleh melihatnya.
   local db_live="${DB_BERKAS:-$app/storage/database.sqlite}"
-  local composer; composer="$(command -v composer)"
 
   # Paksa: --paksa, tanda dari webhook, jalan ulang setelah skrip berubah (versi lama memanggil tanpa
   # argumen), atau aplikasi belum pernah terpasang lengkap.
   local paksa=0
   case "${1:-}" in
     --paksa) paksa=1 ;;
-    --bila-diminta) [ -f "$tanda" ] || exit 0; paksa=1 ;;
-    ""|--bila-ada-pembaruan) ;;
+    ""|--bila-ada-pembaruan|--bila-diminta) ;;
     *) echo "Pilihan tidak dikenal: $1"; exit 64 ;;
   esac
+  [ ! -f "$tanda" ] || paksa=1
   [ -z "${PEMETAAN_JALAN_ULANG:-}" ] || paksa=1
   [ -f "$app/vendor/autoload.php" ] || paksa=1
 
@@ -62,6 +67,8 @@ main() {
   # Jalan ulang (setelah skrip berubah) sudah tercatat lewat tee milik proses pertama.
   [ -n "${PEMETAAN_JALAN_ULANG:-}" ] || exec > >(tee -a "$HOME/.pemetaan/deploy.log") 2>&1
   echo "== $(date -Is) deploy cabang $DEPLOY_BRANCH =="
+  local composer="${COMPOSER_BIN:-}"
+  [ -n "$composer" ] || composer="$(command -v composer)" || { echo "composer tidak ditemukan (isi COMPOSER_BIN di $konfig)."; exit 1; }
   cd "$REPO_DIR"
   local sebelum target
   sebelum="${PEMETAAN_SEBELUM:-$(git rev-parse HEAD)}"
