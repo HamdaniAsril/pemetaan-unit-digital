@@ -1,5 +1,7 @@
 # Panduan Pasang dan Deploy (VPS) — Pemetaan Unit Digital
 
+> **Arsip.** Aplikasi sudah **dicabut dari VPS ini pada 22 November 2026**, setelah server Pemda (https://smart.rohilkab.go.id, lihat [PANDUAN-CLOUDPANEL.md](PANDUAN-CLOUDPANEL.md)) resmi dipakai dan deploy otomatisnya terbukti bekerja. Yang dicabut: container, image, volume, `/srv/pemetaan`, `/etc/pemetaan`, layanan systemd, sudoers dan user `pemetaan-hook`, aturan ufw 9010, `pemetaan.conf` di Nginx bersama, sertifikat, serta webhook dan deploy key di GitHub. Backup terakhir disimpan di luar repo. Panduan di bawah ini disimpan hanya sebagai referensi bila suatu saat perlu dipasang ulang.
+
 > Server Pemda (CloudPanel): **[PANDUAN-CLOUDPANEL.md](PANDUAN-CLOUDPANEL.md)**. Server lain dengan Docker dan root: **[PANDUAN-SERVER-DOCKER.md](PANDUAN-SERVER-DOCKER.md)**.
 
 **Alamat:** https://pemetaan.nekomade.com
