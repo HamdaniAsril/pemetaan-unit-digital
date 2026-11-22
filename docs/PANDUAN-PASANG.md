@@ -27,6 +27,8 @@ Bila satu test gagal, versi yang sedang berjalan **tidak tersentuh**.
 ssh ubuntu@43.173.8.198 "journalctl -u pemetaan-deploy -n 50 --no-pager"
 ```
 
+Push yang datang **selama** deploy berjalan tidak hilang: di akhir deploy, skrip mengecek `main` sekali lagi dan langsung men-deploy ulang bila sudah maju.
+
 **Deploy manual** (tanpa push):
 
 ```bash
