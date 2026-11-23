@@ -34,7 +34,7 @@
 
       @if ($terkirim)
         <div class="terkirim-pita">
-          <div class="stempel {{ $baruTerkirim ? 'tekan' : '' }}"><span class="bulat"><svg class="ikon"><use href="#i-cek"/></svg></span><span>Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></span></div>
+          <div class="stempel"><span class="bulat"><svg class="ikon"><use href="#i-cek"/></svg></span><span>Terkirim<small>{{ $opd->submitted_at?->translatedFormat('j M Y') }}</small></span></div>
           <p><b>Jawaban sudah dikirim pada {{ $opd->submitted_at?->locale('id')->translatedFormat('j F Y, H:i') }}.</b> Terima kasih. Jawaban terkunci; hubungi admin bila ada yang perlu diubah.</p>
         </div>
       @endif
@@ -88,6 +88,19 @@
     <button type="button" class="btn btn-utama" id="dialogKirimYa"><svg class="ikon"><use href="#i-kirim"/></svg> Ya, kirim</button>
   </div>
 </dialog>
+@if ($terkirim && $baruTerkirim)
+<dialog class="konfirmasi berhasil" id="dialogTerkirim" aria-labelledby="terkirimJudul" aria-describedby="terkirimTeks">
+  <div class="isi">
+    <svg class="centang" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7.5 7.5L37.5 19"/></svg>
+    <h2 id="terkirimJudul">Jawaban terkirim</h2>
+    <p id="terkirimTeks">Terima kasih. Jawaban {{ $namaOpd }} sudah diterima dan terkunci. Anda sudah bisa keluar dari aplikasi.</p>
+  </div>
+  <div class="aksi">
+    <button type="button" class="btn btn-garis" id="terkirimTutup">Tutup</button>
+    <form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="btn btn-utama"><svg class="ikon"><use href="#i-keluar"/></svg> Keluar</button></form>
+  </div>
+</dialog>
+@endif
 @endsection
 
 @push('scripts')
@@ -107,7 +120,8 @@ TABS.forEach((t, i) => t.units.forEach(u => TAB_DARI_UNIT.set(u.id, i)));
 const antrean = {}, konfirmasi = {}, galat = {};
 ALL.forEach(u => Q.forEach(q => { konfirmasi[u.id + ":" + q.id] = u.jawaban[q.id]; }));
 let sibuk = 0, adaGagal = false, unitBaru = null;
-let step = Math.min(Math.max(parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1] || "1", 10) - 1, 0), STEPS.length - 1);
+const LANGKAH_AKHIR = STEPS.length - 1;
+let step = TERKIRIM ? LANGKAH_AKHIR : Math.min(Math.max(parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1] || "1", 10) - 1, 0), STEPS.length - 1);
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -128,7 +142,7 @@ function renderRel() {
     const butir = s.review ? "" : `<span class="tab-butir" aria-hidden="true">${s.units.map(u => `<i class="${lengkap(u) ? "isi" : ""}"></i>`).join("")}</span>`;
     const hitung = s.review ? "" : `<span class="tab-hitung">${semua ? ikon("cek") : `${d}/${s.units.length}`}</span>`;
     const label = s.review ? `${esc(s.judul)}` : `${esc(s.judul)}, ${d} dari ${s.units.length} unit lengkap`;
-    return `<li><button type="button" class="tab ${semua && !s.review ? "selesai" : ""}" data-step="${i}" ${i === step ? 'aria-current="step"' : ""} aria-label="${label}">
+    return `<li><button type="button" class="tab ${semua && !s.review ? "selesai" : ""}" data-step="${i}" ${i === step ? 'aria-current="step"' : ""} ${TERKIRIM ? "disabled" : ""} aria-label="${label}">
       <span class="tab-no">${s.review ? ikon(TERKIRIM ? "gembok" : "kirim") : i + 1}</span><span class="tab-nama">${esc(s.judul)}</span>${hitung}${butir}</button></li>`;
   };
   const daftar = $("daftarTab");
@@ -234,7 +248,7 @@ function belumLengkapPertama() {
 function renderKerja() {
   const s = STEPS[step];
   $("judul").textContent = s.review ? "Periksa & kirim" : s.judul;
-  $("subjudul").textContent = s.review ? "Periksa kembali semua jawaban sebelum dikirim."
+  $("subjudul").textContent = s.review ? (TERKIRIM ? "Jawaban sudah dikirim dan terkunci." : "Periksa kembali semua jawaban sebelum dikirim.")
     : s.units.length > 1 ? `${s.label} · beserta ${s.units.length - 1} unit di bawahnya` : s.label;
   $("petunjuk").hidden = s.review;
 
@@ -272,7 +286,7 @@ function lembarRapor() {
         : `<p>Dengan mengirim, Anda memastikan jawaban di atas sesuai kondisi setiap unit. Setelah dikirim, jawaban terkunci.</p><button type="button" class="btn btn-utama" data-kirim>${ikon("kirim")} Kirim jawaban</button>`}
     </div>
   </div>
-  ${step > 0 ? `<div class="langkah"><button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button></div>` : ""}`;
+  ${step > 0 && !TERKIRIM ? `<div class="langkah"><button type="button" class="btn btn-garis" data-go="${step - 1}">${ikon("kiri")} Sebelumnya</button></div>` : ""}`;
 }
 $("isi").addEventListener("click", e => {
   const g = e.target.closest("[data-go]"); if (g) return go(+g.dataset.go);
@@ -290,14 +304,14 @@ function bukaUnit(id) {
 
 /* ---------- Navigasi ---------- */
 function go(i, fokus = true) {
-  if (i < 0 || i >= STEPS.length) return;
+  if (i < 0 || i >= STEPS.length || (TERKIRIM && i !== LANGKAH_AKHIR)) return;
   step = i;
   history.replaceState(null, "", "#tab-" + (i + 1));
   if (unitBaru && !STEPS[i].units.some(u => u.id === unitBaru)) unitBaru = null;
   renderRel(); renderKerja();
   if (fokus) { window.scrollTo(0, 0); $("judul").focus({ preventScroll: true }); }
 }
-window.addEventListener("hashchange", () => { const n = parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1], 10); if (n && n - 1 !== step && n <= STEPS.length) go(n - 1); });
+window.addEventListener("hashchange", () => { if (TERKIRIM) return history.replaceState(null, "", "#tab-" + (LANGKAH_AKHIR + 1)); const n = parseInt((location.hash.match(/^#tab-(\d+)$/) || [])[1], 10); if (n && n - 1 !== step && n <= STEPS.length) go(n - 1); });
 
 /* ---------- Kirim ---------- */
 $("dialogBatal").addEventListener("click", () => $("dialogKirim").close());
@@ -321,7 +335,16 @@ const aturRuangGulir = () => { document.documentElement.style.scrollPaddingTop =
 addEventListener("resize", aturRuangGulir);
 window.addEventListener("beforeunload", e => { if (sibuk) { e.preventDefault(); e.returnValue = ""; } });
 
+/* ---------- Terkirim: popup sekali setelah kirim; halaman tetap terkunci di Periksa & kirim ---------- */
+if (TERKIRIM) history.replaceState(null, "", "#tab-" + (LANGKAH_AKHIR + 1));
+const dialogTerkirim = $("dialogTerkirim");
+if (dialogTerkirim) {
+  $("terkirimTutup").addEventListener("click", () => dialogTerkirim.close());
+  dialogTerkirim.addEventListener("close", () => $("judul").focus({ preventScroll: true }));
+}
+
 renderRel(); renderKerja(); statusSimpan(); aturRuangGulir();
+dialogTerkirim?.showModal();
 </script>
 @else
 <script>

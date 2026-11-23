@@ -101,6 +101,20 @@ test('kirim lengkap mengunci dan halaman menampilkan banner terkirim', function 
     $this->get('/isi')->assertSee('Jawaban sudah dikirim pada');
 });
 
+test('popup terkirim muncul sekali tepat setelah kirim, dengan tombol keluar', function () {
+    foreach ([$this->kepala, $this->bidang] as $u) {
+        Answer::factory()->lengkap()->create(['unit_id' => $u->id]);
+    }
+    $this->actingAs($this->user)->get('/isi')->assertDontSee('id="dialogTerkirim"', false);
+    $this->post('/isi/kirim');
+
+    $this->get('/isi')
+        ->assertSee('id="dialogTerkirim"', false)
+        ->assertSee('Anda sudah bisa keluar dari aplikasi.')
+        ->assertSeeInOrder(['id="dialogTerkirim"', 'action="'.route('logout').'"'], false);
+    $this->get('/isi')->assertDontSee('id="dialogTerkirim"', false)->assertSee('Jawaban sudah dikirim pada');
+});
+
 test('kontak admin tampil bila diisi', function () {
     $this->actingAs($this->user)->get('/isi')->assertDontSee('Hubungi admin:');
     Setting::simpan('kontak_admin', 'WA 0812-0000');
