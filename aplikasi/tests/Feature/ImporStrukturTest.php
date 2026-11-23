@@ -89,7 +89,7 @@ test('data asli terimpor sesuai angka spec', function () {
     app(ImporStruktur::class)->impor(database_path('data/struktur.xlsx'));
 
     expect(Opd::count())->toBe(49)
-        ->and(Unit::count())->toBe(603)
+        ->and(Unit::count())->toBe(605)
         ->and(Unit::where('dinilai', false)->count())->toBe(3)
         ->and(Unit::where('level', 3)->count())->toBe(1)
         ->and(Unit::where('level', '>', 0)->whereNull('parent_id')->count())->toBe(0);

@@ -56,7 +56,7 @@ Skrip akan:
 - mengambil kode lewat HTTPS ke `~/htdocs/pemetaan.contoh.go.id`. Repo-nya publik, jadi tidak perlu kunci. Isi contoh dari CloudPanel di folder itu dipindah ke `~/.pemetaan/`, tidak dihapus.
 - membuat `.env` dengan kunci aplikasi dan rahasia webhook acak
 - menjalankan **seluruh test** di folder terpisah
-- kalau semua lulus: memasang dependensi, membuat **database baru**, dan mengimpor **49 OPD dan 603 unit**
+- kalau semua lulus: memasang dependensi, membuat **database baru**, dan mengimpor **49 OPD dan 605 unit**
 
 Skrip ini aman dijalankan berulang. Kunci aplikasi, rahasia, dan database yang sudah ada tidak ditimpa.
 

@@ -44,7 +44,7 @@ Kegiatan ini dianggap berhasil kalau semua OPD mengirim penilaian lengkap dan ad
 
 ## Evidence on Hand
 
-- Struktur 49 OPD dan 603 unit: `output/Struktur Jabatan per OPD.xlsx`.
+- Struktur 49 OPD dan 605 unit: `aplikasi/database/data/struktur.xlsx` (603 dari SIASN + Fasilitas Kesehatan dan Satuan Pendidikan, ditambah 23 Nov 2026).
 - Prototipe yang disetujui: `prototipe/contoh-form-bapenda.html`. Yang disetujui adalah susunan tab dan alurnya, bukan tampilan visualnya.
 - Tidak ada logo, foto, atau data hasil yang boleh dikarang.
 
